@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "kannon"
+version = "0.1.0"
+description = "Kannon is a wrapper for the gokart library that allows gokart tasks to be easily executed in a distributed and parallel manner on multiple kubernetes jobs."
+authors = ["M3, inc."]
+license = "MIT"
+readme = "README.md"
+
+
+[tool.poetry-dynamic-versioning]
+enable = true
+style = "pep440"
+pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)"
+
+[tool.poetry.dependencies]
+python = "^3.8,<3.12"
+gokart = "^1.2.2"
+kubernetes = "^26.1.0"
+fire = "^0.5.0"
+
+[tool.poetry.group.dev.dependencies]
+pyproject-flake8 = "5.0.4"
+tox = "*"
+moto = "*"
+testfixtures = "*"
+coverage = "*"
+isort = "^5.7"
+yapf = ">=0.32"
+toml = "*"
+lupa = "*"
+fakeredis = "*"
+
+[tool.flake8]
+# B006: Do not use mutable data structures for argument defaults. They are created during function definition time. All calls to the function reuse this one instance of that data structure, persisting changes between them.
+# B008 Do not perform function calls in argument defaults.  The call is performed only once at function definition time. All calls to your function will reuse the result of that definition-time function call.  If this is intended, assign the function call to a module-level variable and use that variable as a default value.
+ignore = "B006,B008"
+max-line-length = 160
+exclude = "venv/*,tox/*"
+
+[tool.yapf]
+based_on_style = "pep8"
+column_limit = 160
+
+[tool.yapfignore]
+ignore_patterns = [
+  ".venv/*",
+  ".tox/*",
+  "examples/*"
+]
+
+[tool.isort]
+line_length = 160
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
