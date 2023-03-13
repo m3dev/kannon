@@ -6,6 +6,12 @@ authors = ["M3, inc."]
 license = "MIT"
 readme = "README.md"
 
+
+[tool.poetry-dynamic-versioning]
+enable = true
+style = "pep440"
+pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)"
+
 [tool.poetry.dependencies]
 python = "^3.8,<3.12"
 gokart = "^1.2.2"
