@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "kannon"
 version = "0.1.0"
-description = ""
+description = "Kannon is a wrapper for the gokart library that allows gokart tasks to be easily executed in a distributed and parallel manner on multiple kubernetes jobs."
 authors = ["M3, inc."]
 license = "MIT"
 readme = "README.md"
