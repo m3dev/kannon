@@ -24,29 +24,6 @@ def create_job(
     )
     logger.debug(f"Job created. status={api_response.status}")
 
-
-def wait_job_until_completion(
-    api_instance: client.BatchV1Api, job_name: str, namespace: str
-) -> JobStatus:
-    while True:
-        api_response = api_instance.read_namespaced_job_status(
-            name=job_name, namespace=namespace
-        )
-        if (
-            api_response.status.succeeded is not None
-            or api_response.status.failed is not None
-        ):
-            final_status = (
-                JobStatus.SUCCEEDED
-                if api_response.status.succeeded
-                else JobStatus.FAILED
-            )
-            return final_status
-        # TODO: enable user to specify duration to sleep
-        sleep(1)
-        logger.debug(f"Job status='{str(api_response.status)}'")
-
-
 def get_job_status(
     api_instance: client.BatchV1Api, job_name: str, namespace: str
 ) -> JobStatus:
