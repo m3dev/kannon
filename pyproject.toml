@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "kannon"
+version = "0.1.0"
+description = ""
+authors = ["yutaro-oguri <yutaro-oguri@m3.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8,<3.12"
+gokart = "^1.2.2"
+kubernetes = "^26.1.0"
+fire = "^0.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
