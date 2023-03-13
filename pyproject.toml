@@ -2,7 +2,7 @@
 name = "kannon"
 version = "0.1.0"
 description = ""
-authors = ["yutaro-oguri <yutaro-oguri@m3.com>"]
+authors = ["M3, inc."]
 license = "MIT"
 readme = "README.md"
 
