@@ -98,7 +98,7 @@ def main(serialized_task: str):
     
     # TODO: Parse a serialized gokart.TaskOnKart here!
     task: gokart.TaskOnKart = gokart.TaskInstanceParameter().parse(serialized_task)
-    # TODO: run gokart.build!
+    # TODO: Run gokart.build!
     gokart.build(task)
 
 
