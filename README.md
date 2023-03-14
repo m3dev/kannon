@@ -14,7 +14,7 @@ It is required for users to prepare following two scripts and copy them into a d
 - A script to start task pipeline on master job.
 - A script for child jobs to run assigned tasks.
 
-Easy and self-contained qucik starter will be available soon!
+Easy and self-contained quick starter will be available soon!
 
 ## A script to run job on master job
 Required to:
