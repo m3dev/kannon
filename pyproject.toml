@@ -5,6 +5,8 @@ description = "Kannon is a wrapper for the gokart library that allows gokart tas
 authors = ["M3, inc."]
 license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/m3dev/kannon"
+repository = "https://github.com/m3dev/kannon"
 
 
 [tool.poetry-dynamic-versioning]
