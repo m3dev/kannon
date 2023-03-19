@@ -10,21 +10,23 @@ from kubernetes import client
 from .task import TaskOnBullet
 from .kube_util import create_job, JobStatus, gen_job_name, get_job_status
 
-
 logger = logging.getLogger(__name__)
 
 
 class Kannon:
+
     def __init__(
         self,
         api_instance: client.BatchV1Api,
         namespace: str,
         image_name: str,
         container_name: str,
-        service_account_name: str,
         job_prefix: str,
-        path_child_script: str,
-        env_to_inherit: List[str],
+        service_account_name: str,
+        persistent_volume: str = None,
+        persistent_volume_claim: str = None,
+        path_child_script: str = "./run_child.py",
+        env_to_inherit: List[str] = ["TASK_WORKSPACE_DIRECTORY"],
         backoff_limit: int = 0,
     ) -> None:
         # validation
@@ -32,12 +34,17 @@ class Kannon:
             raise FileNotFoundError(f"Child script {path_child_script} does not exist.")
         if backoff_limit < 0:
             raise ValueError(f"backoff_limit should be >= 0")
+        if (persistent_volume is None) != (persistent_volume_claim is None):
+            raise ValueError("persistent_volume and persistent_volume_claim should be specified at the same time.")
+
         self.api_instance = api_instance
         self.namespace = namespace
         self.image_name = image_name
         self.container_name = container_name
-        self.service_account_name = service_account_name
         self.job_prefix = job_prefix
+        self.service_account_name = service_account_name
+        self.persistent_volume = persistent_volume
+        self.persistent_volume_claim = persistent_volume_claim
         self.path_child_script = path_child_script
         self.env_to_inherit = env_to_inherit
         self.backoff_limit = backoff_limit
@@ -61,9 +68,7 @@ class Kannon:
                 logger.info(f"Task {self._gen_task_info(task)} is already running.")
                 continue
 
-            logger.info(
-                f"Checking if task {self._gen_task_info(task)} is executable..."
-            )
+            logger.info(f"Checking if task {self._gen_task_info(task)} is executable...")
             # TODO: enable user to specify duration to sleep for each task
             sleep(1.0)
             if not self._is_executable(task):
@@ -71,27 +76,19 @@ class Kannon:
                 continue
             # execute task
             if isinstance(task, TaskOnBullet):
-                logger.info(
-                    f"Trying to run task {self._gen_task_info(task)} on child job..."
-                )
+                logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 self._exec_bullet_task(task)
             elif isinstance(task, gokart.TaskOnKart):
-                logger.info(
-                    f"Executing task {self._gen_task_info(task)} on master job..."
-                )
+                logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
                 self._exec_gokart_task(task)
-                logger.info(
-                    f"Completed task {self._gen_task_info(task)} on master job."
-                )
+                logger.info(f"Completed task {self._gen_task_info(task)} on master job.")
             else:
                 raise TypeError(f"Invalid task type: {type(task)}")
             launched_task_ids.add(task.make_unique_id())
 
         logger.info(f"All tasks completed!")
 
-    def _create_task_queue(
-        self, root_task: gokart.TaskOnKart
-    ) -> Deque[gokart.TaskOnKart]:
+    def _create_task_queue(self, root_task: gokart.TaskOnKart) -> Deque[gokart.TaskOnKart]:
         task_queue: Deque[gokart.TaskOnKart] = deque()
 
         def _rec_enqueue_task(task: gokart.TaskOnKart) -> None:
@@ -115,9 +112,7 @@ class Kannon:
         try:
             gokart.build(task)
         except Exception:
-            raise RuntimeError(
-                f"Task {self._gen_task_info(task)} on job master has failed."
-            )
+            raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
         # Run on child job
@@ -128,9 +123,7 @@ class Kannon:
             serialized_task=serialized_task,
         )
         create_job(self.api_instance, job, self.namespace)
-        logger.info(
-            f"Created child job {job_name} with task {self._gen_task_info(task)}"
-        )
+        logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
         task_unique_id = task.make_unique_id()
         self.task_id_to_job_name[task_unique_id] = job_name
 
@@ -146,22 +139,37 @@ class Kannon:
             "--serialized-task",
             f"'{serialized_task}'",
         ]
+        # inherit environment variables
         child_envs = []
         for env_name in self.env_to_inherit:
             if env_name not in os.environ:
                 raise ValueError(f"Envvar {env_name} does not exist.")
             child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
+        # mount persistent volume
+        volume_mounts = []
+        if self.persistent_volume is not None:
+            mount_path = os.environ.get("TASK_WORKSPACE_DIRECTORY", "/cache")
+            volume_mounts.append(client.V1VolumeMount(name=self.persistent_volume, mount_path=mount_path))
         container = client.V1Container(
             name=self.container_name,
             image=self.image_name,
             command=cmd,
             env=child_envs,
+            volume_mounts=volume_mounts,
+            image_pull_policy="IfNotPresent",
         )
+        # persistent volume claims
+        volumes = []
+        if self.persistent_volume_claim is not None:
+            volumes.append(
+                client.V1Volume(name=self.persistent_volume,
+                                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=self.persistent_volume_claim)))
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={"app": "kannon"}),
             spec=client.V1PodSpec(
                 restart_policy="Never",
                 containers=[container],
+                volumes=volumes,
                 service_account_name=self.service_account_name,
             ),
         )
@@ -195,9 +203,7 @@ class Kannon:
                 self.namespace,
             )
             if job_status == JobStatus.FAILED:
-                raise RuntimeError(
-                    f"Task {self._gen_task_info(child)} on job {job_name} has failed."
-                )
+                raise RuntimeError(f"Task {self._gen_task_info(child)} on job {job_name} has failed.")
             if job_status == JobStatus.RUNNING:
                 return False
         return True
