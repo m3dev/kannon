@@ -1,4 +1,5 @@
 from collections import deque
+from copy import deepcopy
 import os
 from time import sleep
 from typing import Deque, Dict, List, Set
@@ -17,37 +18,24 @@ class Kannon:
 
     def __init__(
         self,
+        # k8s resources
         api_instance: client.BatchV1Api,
-        namespace: str,
-        image_name: str,
-        container_name: str,
+        template_job: client.V1Job,
+        # kannon resources
         job_prefix: str,
-        service_account_name: str,
-        persistent_volume: str = None,
-        persistent_volume_claim: str = None,
         path_child_script: str = "./run_child.py",
         env_to_inherit: List[str] = ["TASK_WORKSPACE_DIRECTORY"],
-        backoff_limit: int = 0,
     ) -> None:
         # validation
         if not os.path.exists(path_child_script):
             raise FileNotFoundError(f"Child script {path_child_script} does not exist.")
-        if backoff_limit < 0:
-            raise ValueError(f"backoff_limit should be >= 0")
-        if (persistent_volume is None) != (persistent_volume_claim is None):
-            raise ValueError("persistent_volume and persistent_volume_claim should be specified at the same time.")
 
+        self.template_job = template_job
         self.api_instance = api_instance
-        self.namespace = namespace
-        self.image_name = image_name
-        self.container_name = container_name
+        self.namespace = template_job.metadata.namespace
         self.job_prefix = job_prefix
-        self.service_account_name = service_account_name
-        self.persistent_volume = persistent_volume
-        self.persistent_volume_claim = persistent_volume_claim
         self.path_child_script = path_child_script
         self.env_to_inherit = env_to_inherit
-        self.backoff_limit = backoff_limit
 
         self.task_id_to_job_name: Dict[str, str] = dict()
 
@@ -118,7 +106,7 @@ class Kannon:
         # Run on child job
         serialized_task = gokart.TaskInstanceParameter().serialize(task)
         job_name = gen_job_name(f"{self.job_prefix}-{task.get_task_family()}")
-        job = self._create_job_object(
+        job = self._create_child_job_object(
             job_name=job_name,
             serialized_task=serialized_task,
         )
@@ -127,11 +115,7 @@ class Kannon:
         task_unique_id = task.make_unique_id()
         self.task_id_to_job_name[task_unique_id] = job_name
 
-    @staticmethod
-    def _gen_task_info(task: gokart.TaskOnKart) -> str:
-        return f"{task.get_task_family()}_{task.make_unique_id()}"
-
-    def _create_job_object(self, serialized_task: str, job_name: str) -> client.V1Job:
+    def _create_child_job_object(self, job_name: str, serialized_task: str) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
         cmd = [
             "python",
@@ -139,52 +123,24 @@ class Kannon:
             "--serialized-task",
             f"'{serialized_task}'",
         ]
-        # inherit environment variables
+        job = deepcopy(self.template_job)
+        # replace command
+        job.spec.template.spec.containers[0].command = cmd
+        # replace env
         child_envs = []
         for env_name in self.env_to_inherit:
             if env_name not in os.environ:
                 raise ValueError(f"Envvar {env_name} does not exist.")
             child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
-        # mount persistent volume
-        volume_mounts = []
-        if self.persistent_volume is not None:
-            mount_path = os.environ.get("TASK_WORKSPACE_DIRECTORY", "/cache")
-            volume_mounts.append(client.V1VolumeMount(name=self.persistent_volume, mount_path=mount_path))
-        container = client.V1Container(
-            name=self.container_name,
-            image=self.image_name,
-            command=cmd,
-            env=child_envs,
-            volume_mounts=volume_mounts,
-            image_pull_policy="IfNotPresent",
-        )
-        # persistent volume claims
-        volumes = []
-        if self.persistent_volume_claim is not None:
-            volumes.append(
-                client.V1Volume(name=self.persistent_volume,
-                                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=self.persistent_volume_claim)))
-        template = client.V1PodTemplateSpec(
-            metadata=client.V1ObjectMeta(labels={"app": "kannon"}),
-            spec=client.V1PodSpec(
-                restart_policy="Never",
-                containers=[container],
-                volumes=volumes,
-                service_account_name=self.service_account_name,
-            ),
-        )
-        spec = client.V1JobSpec(template=template, backoff_limit=self.backoff_limit)
-        job = client.V1Job(
-            api_version="batch/v1",
-            kind="Job",
-            metadata=client.V1ObjectMeta(
-                name=job_name,
-                namespace=self.namespace,
-            ),
-            spec=spec,
-        )
+        job.spec.template.spec.containers[0].env = child_envs
+        # replace job name
+        job.metadata.name = job_name
 
         return job
+
+    @staticmethod
+    def _gen_task_info(task: gokart.TaskOnKart) -> str:
+        return f"{task.get_task_family()}_{task.make_unique_id()}"
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = task.requires()
@@ -207,3 +163,59 @@ class Kannon:
             if job_status == JobStatus.RUNNING:
                 return False
         return True
+
+
+# def create_child_job_template(
+#     namespace: str,
+#     image_name: str,
+#     container_name: str,
+#     service_account_name: str,
+#     persistent_volume: str = None,
+#     persistent_volume_claim: str = None,
+#     backoff_limit: int = 0,
+# ) -> client.V1Job:
+#     # validation
+#     if backoff_limit < 0:
+#         raise ValueError(f"backoff_limit should be >= 0")
+#     if (persistent_volume is None) != (persistent_volume_claim is None):
+#         raise ValueError("persistent_volume and persistent_volume_claim should be specified at the same time.")
+
+#     # mount persistent volume
+#     volume_mounts = []
+#     if persistent_volume is not None:
+#         mount_path = os.environ.get("TASK_WORKSPACE_DIRECTORY", "/cache")
+#         volume_mounts.append(client.V1VolumeMount(name=persistent_volume, mount_path=mount_path))
+#     container = client.V1Container(
+#         name=container_name,
+#         image=image_name,
+#         # command=cmd,
+#         # env=child_envs,
+#         volume_mounts=volume_mounts,
+#         image_pull_policy="IfNotPresent",
+#     )
+#     # persistent volume claims
+#     volumes = []
+#     if persistent_volume_claim is not None:
+#         volumes.append(
+#             client.V1Volume(name=persistent_volume, persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=persistent_volume_claim)))
+#     template = client.V1PodTemplateSpec(
+#         metadata=client.V1ObjectMeta(labels={"app": "kannon"}),
+#         spec=client.V1PodSpec(
+#             restart_policy="Never",
+#             containers=[container],
+#             volumes=volumes,
+#             service_account_name=service_account_name,
+#         ),
+#     )
+#     spec = client.V1JobSpec(template=template, backoff_limit=backoff_limit)
+#     job = client.V1Job(
+#         api_version="batch/v1",
+#         kind="Job",
+#         metadata=client.V1ObjectMeta(
+#             name="template-job",
+#             namespace=namespace,
+#         ),
+#         spec=spec,
+#     )
+
+#     return job
