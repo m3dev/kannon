@@ -2,7 +2,7 @@ from collections import deque
 from copy import deepcopy
 import os
 from time import sleep
-from typing import Deque, Dict, List, Set
+from typing import Deque, Dict, List, Set, Optional
 import logging
 
 import gokart
@@ -24,7 +24,7 @@ class Kannon:
         # kannon resources
         job_prefix: str,
         path_child_script: str = "./run_child.py",
-        env_to_inherit: List[str] = ["TASK_WORKSPACE_DIRECTORY"],
+        env_to_inherit: Optional[List[str]] = None,
     ) -> None:
         # validation
         if not os.path.exists(path_child_script):
@@ -35,6 +35,8 @@ class Kannon:
         self.namespace = template_job.metadata.namespace
         self.job_prefix = job_prefix
         self.path_child_script = path_child_script
+        if env_to_inherit is None:
+            env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
 
         self.task_id_to_job_name: Dict[str, str] = dict()
