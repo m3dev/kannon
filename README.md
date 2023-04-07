@@ -26,7 +26,7 @@ Here is an example to define the following task pipeline with gokart and kannon.
 
 <div align="center">
 
-![](./image/readme_example_tasks.png)
+![](./image/readme_example_tasks.jpeg)
 
 </div>
 
