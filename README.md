@@ -17,10 +17,10 @@ It is required for users to prepare following two scripts and copy them into a d
 Easy and self-contained quick starter will be available soon!
 
 ## How to define tasks
-The way to define Tasks is almost the same as for gokart.
+The way to define tasks is almost the same as for gokart.
 All you have to do is replace the parent class of the task class you want to distribute with `kannon.TaskOnBullet` from `gokart.TaskOnKart`.
 
-To gain detailed explanations on how to define a `gokart.TaskOnKart`, please refer to [gokart docs](https://gokart.readthedocs.io/en/latest/task_on_kart.html).
+To get detailed explanations on how to define a `gokart.TaskOnKart`, please refer to [gokart docs](https://gokart.readthedocs.io/en/latest/task_on_kart.html).
 
 Here is an example to define the following task pipeline with gokart and kannon.
 
