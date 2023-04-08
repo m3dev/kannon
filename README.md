@@ -16,6 +16,40 @@ It is required for users to prepare following two scripts and copy them into a d
 
 Easy and self-contained quick starter will be available soon!
 
+## Give custom permissions to the service account
+If you have a service account `my-batch` within a namespace `mynamespace`, the following permissions on `jobs` and `jobs/status` should be added.
+
+```yml
+# role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: mynamespace
+  name: job-admin
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs/status"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: job-admin-binding
+  namespace: mynamespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: job-admin
+subjects:
+  - namespace: mynamespace
+    kind: ServiceAccount
+    name: my-batch
+```
+
 ## How to define tasks
 The way to define tasks is almost the same as for gokart.
 All you have to do is replace the parent class of the task class you want to distribute with `kannon.TaskOnBullet` from `gokart.TaskOnKart`.
