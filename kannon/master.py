@@ -1,16 +1,16 @@
+import logging
+import os
 from collections import deque
 from copy import deepcopy
-import os
 from time import sleep
-from typing import Deque, Dict, List, Set, Optional
-import logging
+from typing import Deque, Dict, List, Optional, Set
 
 import gokart
-from luigi.task import flatten
 from kubernetes import client
+from luigi.task import flatten
 
+from .kube_util import JobStatus, create_job, gen_job_name, get_job_status
 from .task import TaskOnBullet
-from .kube_util import create_job, JobStatus, gen_job_name, get_job_status
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class Kannon:
                 raise TypeError(f"Invalid task type: {type(task)}")
             launched_task_ids.add(task.make_unique_id())
 
-        logger.info(f"All tasks completed!")
+        logger.info("All tasks completed!")
 
     def _create_task_queue(self, root_task: gokart.TaskOnKart) -> Deque[gokart.TaskOnKart]:
         task_queue: Deque[gokart.TaskOnKart] = deque()
