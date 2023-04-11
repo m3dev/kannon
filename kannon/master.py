@@ -33,7 +33,8 @@ class Kannon:
 
         self.template_job = template_job
         self.api_instance = api_instance
-        self.namespace = template_job.metadata.namespace
+        namespace = template_job.metadata.namespace
+        self.namespace = "default" if namespace is None else namespace
         self.job_prefix = job_prefix
         self.path_child_script = path_child_script
         if env_to_inherit is None:
@@ -53,29 +54,32 @@ class Kannon:
         while task_queue:
             task = task_queue.popleft()
             if task.complete():
-                logger.info(f"Task {self._gen_task_info(task)} is already done.")
+                logger.info(f"Task {self._gen_task_info(task)} is already completed.")
                 continue
             if task.make_unique_id() in launched_task_ids:
-                logger.info(f"Task {self._gen_task_info(task)} is already running.")
+                logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
+                task_queue.append(task)
                 continue
 
-            logger.info(f"Checking if task {self._gen_task_info(task)} is executable...")
             # TODO: enable user to specify duration to sleep for each task
-            sleep(1.0)
+            sleep(0.1)
+            logger.info(f"Checking if task {self._gen_task_info(task)} is executable...")
             if not self._is_executable(task):
-                task_queue.append(task)
+                task_queue.append(task)  # re-enqueue task to check if it's executable later
+                logger.debug("Task is not executable yet. Re-enqueue task.")
                 continue
             # execute task
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 self._exec_bullet_task(task)
+                launched_task_ids.add(task.make_unique_id())  # mark as already launched task
+                task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
                 self._exec_gokart_task(task)
                 logger.info(f"Completed task {self._gen_task_info(task)} on master job.")
             else:
                 raise TypeError(f"Invalid task type: {type(task)}")
-            launched_task_ids.add(task.make_unique_id())
 
         logger.info("All tasks completed!")
 
@@ -126,16 +130,18 @@ class Kannon:
         ]
         job = deepcopy(self.template_job)
         # replace command
-        assert len(job.spec.template.spec.containers[0].command) == 0, \
-            "command will be replaced by kannon, so you shouldn't set any command and args"
+        original_command = job.spec.template.spec.containers[0].command
+        if original_command:
+            raise ValueError("command will be replaced by kannon, so you shouldn't set any command and args")
         job.spec.template.spec.containers[0].command = cmd
         # replace env
-        child_envs = []
+        original_env = job.spec.template.spec.containers[0].env
+        child_envs = [] if original_env is None else original_env
         for env_name in self.env_to_inherit:
             if env_name not in os.environ:
                 raise ValueError(f"Envvar {env_name} does not exist.")
             child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
-        job.spec.template.spec.containers[0].env.extend(child_envs)
+        job.spec.template.spec.containers[0].env = child_envs
         # replace job name
         job.metadata.name = job_name
 
