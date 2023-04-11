@@ -61,7 +61,7 @@ class Kannon:
                 continue
 
             # TODO: enable user to specify duration to sleep for each task
-            sleep(0.1)
+            sleep(1.0)
             logger.info(f"Checking if task {self._gen_task_info(task)} is executable...")
             if not self._is_executable(task):
                 task_queue.append(task)  # re-enqueue task to check if it's executable later
