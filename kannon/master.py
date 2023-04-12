@@ -53,29 +53,32 @@ class Kannon:
         while task_queue:
             task = task_queue.popleft()
             if task.complete():
-                logger.info(f"Task {self._gen_task_info(task)} is already done.")
+                logger.info(f"Task {self._gen_task_info(task)} is already completed.")
                 continue
             if task.make_unique_id() in launched_task_ids:
-                logger.info(f"Task {self._gen_task_info(task)} is already running.")
+                logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
+                task_queue.append(task)
                 continue
 
-            logger.info(f"Checking if task {self._gen_task_info(task)} is executable...")
             # TODO: enable user to specify duration to sleep for each task
             sleep(1.0)
+            logger.info(f"Checking if task {self._gen_task_info(task)} is executable...")
             if not self._is_executable(task):
-                task_queue.append(task)
+                task_queue.append(task)  # re-enqueue task to check if it's executable later
+                logger.debug("Task is not executable yet. Re-enqueue task.")
                 continue
             # execute task
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 self._exec_bullet_task(task)
+                launched_task_ids.add(task.make_unique_id())  # mark as already launched task
+                task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
                 self._exec_gokart_task(task)
                 logger.info(f"Completed task {self._gen_task_info(task)} on master job.")
             else:
                 raise TypeError(f"Invalid task type: {type(task)}")
-            launched_task_ids.add(task.make_unique_id())
 
         logger.info("All tasks completed!")
 
