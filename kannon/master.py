@@ -126,13 +126,13 @@ class Kannon:
         ]
         job = deepcopy(self.template_job)
         # replace command
-        original_command = job.spec.template.spec.containers[0].command
-        if original_command:
-            raise ValueError("command will be replaced by kannon, so you shouldn't set any command and args")
+        assert job.spec.template.spec.containers[0].command is None, \
+            "command will be replaced by kannon, so you shouldn't set any command and args"
         job.spec.template.spec.containers[0].command = cmd
         # replace env
-        original_env = job.spec.template.spec.containers[0].env
-        child_envs = [] if original_env is None else original_env
+        child_envs = job.spec.template.spec.containers[0].env
+        if not child_envs:
+            child_envs = []
         for env_name in self.env_to_inherit:
             if env_name not in os.environ:
                 raise ValueError(f"Envvar {env_name} does not exist.")
