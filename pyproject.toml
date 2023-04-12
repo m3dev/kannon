@@ -23,14 +23,12 @@ fire = "^0.5.0"
 [tool.poetry.group.dev.dependencies]
 pyproject-flake8 = "5.0.4"
 tox = "*"
-moto = "*"
-testfixtures = "*"
 coverage = "*"
 isort = "^5.7"
 yapf = ">=0.32"
 toml = "*"
-lupa = "*"
-fakeredis = "*"
+mypy = "^1.2.0"
+pandas-stubs = "^1.5.3.230321"
 
 [tool.flake8]
 per-file-ignores = """
@@ -52,6 +50,9 @@ ignore_patterns = [
 
 [tool.isort]
 line_length = 160
+
+[tool.mypy]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]
