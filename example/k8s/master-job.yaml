@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: master-job-quick-starter
+  namespace: kannon-quick-starter
+spec:
+  template:
+    spec:
+      serviceAccountName: job-manager
+      containers:
+      - name: job
+        image: kannon_quick_starter
+        command: ["python", "./run_batch.py"]
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: kannon-cache-volume
+          mountPath: /cache
+        env:
+          - name: TASK_WORKSPACE_DIRECTORY
+            value: /cache
+      restartPolicy: Never
+      volumes:
+      - name: kannon-cache-volume
+        persistentVolumeClaim:
+          claimName: kannon-cache-volume-claim
