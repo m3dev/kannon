@@ -9,6 +9,9 @@ Kannon can be installed via `pip`.
 pip install kannon
 ```
 
+# [Quick Starter](./example/quick_starter.md)
+An easy and self-contained tutorial can be found in [here](./example/quick_starter.md)!
+
 # Usage
 It is required for users to prepare following two scripts and copy them into a docker container:
 - A script to start task pipeline on master job.
