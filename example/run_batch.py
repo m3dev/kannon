@@ -41,7 +41,7 @@ def _get_template_job_object():
         kind="Job",
         metadata=client.V1ObjectMeta(
             name="kannon-child",
-            namespace="default",
+            namespace="kannon-quick-starter",
         ),
         spec=client.V1JobSpec(template=client.V1PodTemplateSpec(spec=client.V1PodSpec(
             service_account_name="job-manager",
@@ -49,11 +49,11 @@ def _get_template_job_object():
                 client.V1Container(name="job",
                                    image="kannon_quick_starter",
                                    image_pull_policy="IfNotPresent",
-                                   volume_mounts=[client.V1VolumeMount(name="cache-volume", mount_path="/cache")])
+                                   volume_mounts=[client.V1VolumeMount(name="kannon-cache-volume", mount_path="/cache")])
             ],
             restart_policy="Never",
-            volumes=[client.V1Volume(name="cache-volume", persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                claim_name="cache-volume-claim"))]))))
+            volumes=[client.V1Volume(name="kannon-cache-volume", persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                claim_name="kannon-cache-volume-claim"))]))))
 
 
 def main():

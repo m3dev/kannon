@@ -15,6 +15,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: kannon-cache-volume-claim
+  namespace: kannon-quick-starter
 spec:
   storageClassName: manual
   accessModes:
