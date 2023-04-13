@@ -49,11 +49,11 @@ def _get_template_job_object():
                 client.V1Container(name="job",
                                    image="kannon_quick_starter",
                                    image_pull_policy="IfNotPresent",
-                                   volume_mounts=[client.V1VolumeMount(name="kannon-cache-volume", mount_path="/cache")])
+                                   volume_mounts=[client.V1VolumeMount(name="kannon-cache", mount_path="/cache")])
             ],
             restart_policy="Never",
-            volumes=[client.V1Volume(name="kannon-cache-volume", persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                claim_name="kannon-cache-volume-claim"))]))))
+            volumes=[client.V1Volume(name="kannon-cache", persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                claim_name="kannon-cache-claim"))]))))
 
 
 def main():
