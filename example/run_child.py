@@ -5,7 +5,7 @@ import fire
 import gokart
 import luigi
 # Import task definition
-import tasks
+import tasks  # noqa: F401
 
 logging.basicConfig(level=logging.INFO)
 
