@@ -13,13 +13,13 @@ spec:
         command: ["python", "./run_batch.py"]
         imagePullPolicy: IfNotPresent
         volumeMounts:
-        - name: kannon-cache-volume
+        - name: kannon-cache
           mountPath: /cache
         env:
           - name: TASK_WORKSPACE_DIRECTORY
             value: /cache
       restartPolicy: Never
       volumes:
-      - name: kannon-cache-volume
+      - name: kannon-cache
         persistentVolumeClaim:
-          claimName: kannon-cache-volume-claim
+          claimName: kannon-cache-claim

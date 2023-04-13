@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: kannon-cache-volume
+  name: kannon-cache
 spec:
   storageClassName: manual
   capacity:
@@ -14,7 +14,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kannon-cache-volume-claim
+  name: kannon-cache-claim
   namespace: kannon-quick-starter
 spec:
   storageClassName: manual
