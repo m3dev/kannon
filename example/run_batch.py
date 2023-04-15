@@ -2,6 +2,7 @@
 import logging
 
 import fire
+import gokart
 import luigi
 # import task definition
 import tasks
@@ -12,7 +13,7 @@ from kannon import Kannon
 logging.basicConfig(level=logging.INFO)
 
 
-def _create_task_instances():
+def _create_task_instances() -> gokart.TaskOnKart:
     task_a = tasks.TaskA(param="a")
     task_b = tasks.TaskB(param="b", parent=task_a)
 
@@ -35,7 +36,7 @@ def _create_task_instances():
     return task_g
 
 
-def _get_template_job_object():
+def _get_template_job_object() -> client.V1Job:
     return client.V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -56,7 +57,7 @@ def _get_template_job_object():
                 claim_name="kannon-cache-claim"))]))))
 
 
-def main():
+def main() -> None:
     # Load luigi config
     luigi.configuration.LuigiConfigParser.add_config_path("./conf/base.ini")
 

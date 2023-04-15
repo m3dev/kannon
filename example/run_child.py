@@ -10,7 +10,7 @@ import tasks  # noqa: F401
 logging.basicConfig(level=logging.INFO)
 
 
-def main(serialized_task: str):
+def main(serialized_task: str) -> None:
     # Load luigi config
     luigi.configuration.LuigiConfigParser.add_config_path("./conf/base.ini")
 
