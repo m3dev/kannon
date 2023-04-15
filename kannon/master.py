@@ -42,7 +42,7 @@ class Kannon:
 
         self.task_id_to_job_name: Dict[str, str] = dict()
 
-    def build(self, root_task: gokart.TaskOnKart):
+    def build(self, root_task: gokart.TaskOnKart) -> None:
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)

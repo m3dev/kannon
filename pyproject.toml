@@ -51,6 +51,9 @@ ignore_patterns = [
 line_length = 160
 
 [tool.mypy]
+strict = true
+disallow_subclassing_any = false  # revert strict
+implicit_reexport = true  # revert strict
 ignore_missing_imports = true
 
 [build-system]

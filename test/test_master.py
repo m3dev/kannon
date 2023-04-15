@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import unittest
 
@@ -9,29 +11,29 @@ from kannon import Kannon
 
 class TestStringMethods(unittest.TestCase):
 
-    def test_create_task_queue(self):
+    def test_create_task_queue(self) -> None:
 
         class Example(gokart.TaskOnKart):
             pass
 
         class Dict(gokart.TaskOnKart):
 
-            def requires(self):
+            def requires(self) -> dict[str, Example]:
                 return dict(example=Example())
 
         class List(gokart.TaskOnKart):
 
-            def requires(self):
+            def requires(self) -> list[Example]:
                 return [Example()]
 
         class ListInDict(gokart.TaskOnKart):
 
-            def requires(self):
+            def requires(self) -> dict[str, list[Example]]:
                 return dict(example=[Example()])
 
         class Single(gokart.TaskOnKart):
 
-            def requires(self):
+            def requires(self) -> Example:
                 return Example()
 
         cases = [Dict(), List(), ListInDict(), Single()]
@@ -40,7 +42,7 @@ class TestStringMethods(unittest.TestCase):
                 master = Kannon(
                     api_instance=None,
                     template_job=client.V1Job(metadata=client.V1ObjectMeta()),
-                    job_prefix=None,
+                    job_prefix="",
                     path_child_script=__file__,  # just pass any existing file as dummy
                     env_to_inherit=None,
                 )
@@ -69,7 +71,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         super().tearDown()
         os.environ.clear()
 
-    def test_success_basic(self):
+    def test_success_basic(self) -> None:
 
         class Example(gokart.TaskOnKart):
             pass
@@ -79,7 +81,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         master = Kannon(
             api_instance=None,
             template_job=template_job,
-            job_prefix=None,
+            job_prefix="",
             path_child_script=__file__,  # just pass any existing file as dummy
             env_to_inherit=None,
         )
@@ -104,7 +106,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         self.assertEqual(len(child_env), 1)
         self.assertEqual(child_env[0], {"name": "TASK_WORKSPACE_DIRECTORY", "value": "/cache"})
 
-    def test_success_custom_env(self):
+    def test_success_custom_env(self) -> None:
 
         class Example(gokart.TaskOnKart):
             pass
@@ -114,7 +116,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         master = Kannon(
             api_instance=None,
             template_job=template_job,
-            job_prefix=None,
+            job_prefix="",
             path_child_script=__file__,  # just pass any existing file as dummy
             env_to_inherit=["TASK_WORKSPACE_DIRECTORY", "MY_ENV0", "MY_ENV1"],
         )
@@ -129,7 +131,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         self.assertEqual(child_env[1], {"name": "MY_ENV0", "value": "env0"})
         self.assertEqual(child_env[2], {"name": "MY_ENV1", "value": "env1"})
 
-    def test_fail_command_set(self):
+    def test_fail_command_set(self) -> None:
 
         class Example(gokart.TaskOnKart):
             pass
@@ -140,7 +142,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         master = Kannon(
             api_instance=None,
             template_job=template_job,
-            job_prefix=None,
+            job_prefix="",
             path_child_script=__file__,  # just pass any existing file as dummy
             env_to_inherit=None,
         )
@@ -149,7 +151,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         with self.assertRaises(AssertionError):
             master._create_child_job_object("test-job", serialized_task)
 
-    def test_fail_default_env_not_exist(self):
+    def test_fail_default_env_not_exist(self) -> None:
 
         class Example(gokart.TaskOnKart):
             pass
@@ -163,7 +165,7 @@ class TestCreateChildJobObject(unittest.TestCase):
                 master = Kannon(
                     api_instance=None,
                     template_job=template_job,
-                    job_prefix=None,
+                    job_prefix="",
                     path_child_script=__file__,  # just pass any existing file as dummy
                     env_to_inherit=case,
                 )
