@@ -27,7 +27,7 @@ class TaskB(gokart.TaskOnKart):
         self.dump("B")
 
 
-class TaskC(gokart.TaskOnKart):
+class TaskC(kannon.TaskOnBullet):
     param = luigi.Parameter()
     parent = gokart.TaskInstanceParameter()
 
@@ -39,7 +39,7 @@ class TaskC(gokart.TaskOnKart):
         self.dump("C")
 
 
-class TaskD(gokart.TaskOnKart):
+class TaskD(kannon.TaskOnBullet):
     param = luigi.Parameter()
     parent = gokart.TaskInstanceParameter()
 
@@ -51,7 +51,7 @@ class TaskD(gokart.TaskOnKart):
         self.dump("D")
 
 
-class TaskE(gokart.TaskOnKart):
+class TaskE(kannon.TaskOnBullet):
     param = luigi.Parameter()
     parent = gokart.TaskInstanceParameter()
 
