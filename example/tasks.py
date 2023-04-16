@@ -11,7 +11,7 @@ class TaskA(gokart.TaskOnKart):
     param = luigi.Parameter()
 
     def run(self) -> None:
-        sleep(10)
+        sleep(5)
         self.dump("A")
 
 
@@ -23,11 +23,11 @@ class TaskB(gokart.TaskOnKart):
         return {"parent": self.parent}
 
     def run(self) -> None:
-        sleep(10)
+        sleep(5)
         self.dump("B")
 
 
-class TaskC(kannon.TaskOnBullet):
+class TaskC(gokart.TaskOnKart):
     param = luigi.Parameter()
     parent = gokart.TaskInstanceParameter()
 
@@ -35,11 +35,11 @@ class TaskC(kannon.TaskOnBullet):
         return {"parent": self.parent}
 
     def run(self) -> None:
-        sleep(60 * 3)
+        sleep(30)
         self.dump("C")
 
 
-class TaskD(kannon.TaskOnBullet):
+class TaskD(gokart.TaskOnKart):
     param = luigi.Parameter()
     parent = gokart.TaskInstanceParameter()
 
@@ -47,11 +47,11 @@ class TaskD(kannon.TaskOnBullet):
         return {"parent": self.parent}
 
     def run(self) -> None:
-        sleep(60 * 3)
+        sleep(30)
         self.dump("D")
 
 
-class TaskE(kannon.TaskOnBullet):
+class TaskE(gokart.TaskOnKart):
     param = luigi.Parameter()
     parent = gokart.TaskInstanceParameter()
 
@@ -59,7 +59,7 @@ class TaskE(kannon.TaskOnBullet):
         return {"parent": self.parent}
 
     def run(self) -> None:
-        sleep(60 * 4)
+        sleep(30)
         self.dump("E")
 
 
@@ -73,7 +73,7 @@ class TaskF(gokart.TaskOnKart):
         return {"parent_0": self.parent_0, "parent_1": self.parent_1, "parent_2": self.parent_2}
 
     def run(self) -> None:
-        sleep(10)
+        sleep(5)
         self.dump("F")
 
 
@@ -85,5 +85,5 @@ class TaskG(gokart.TaskOnKart):
         return {"parent": self.parent}
 
     def run(self) -> None:
-        sleep(10)
+        sleep(5)
         self.dump("G")

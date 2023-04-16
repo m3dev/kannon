@@ -95,49 +95,48 @@ Let's check running jobs. You can see 3 child tasks are running on multiple jobs
 ```bash
 $ minikube kubectl -- get jobs -n kannon-quick-starter
 NAME                                     COMPLETIONS   DURATION   AGE
-master-job-quick-starter                 0/1           7m23s      7m23s
-# task c0, c1, c2 are done in parallel.
-quick-starter-taskc-014-20230413142312   1/1           3m5s       6m52s
-quick-starter-taskc-036-20230413142309   1/1           3m5s       6m55s
-quick-starter-taskc-191-20230413142306   1/1           3m6s       6m58s
-# then, task d0, d1, d2 are done in parallel.
-quick-starter-taskd-079-20230413142613   1/1           3m7s       3m51s
-quick-starter-taskd-118-20230413142615   1/1           3m6s       3m49s
-quick-starter-taskd-143-20230413142617   1/1           3m7s       3m47s
-# finally, task e0, e1, e2 are running in parallel now.
-quick-starter-taske-071-20230413142923   0/1           41s        41s
-quick-starter-taske-091-20230413142924   0/1           40s        40s
-quick-starter-taske-146-20230413142922   0/1           42s        42s
+# C0-C2 are done in parallel
+master-job-quick-starter                 0/1           65s        65s
+quick-starter-taskc-069-20230416142331   1/1           35s        51s
+quick-starter-taskc-169-20230416142334   1/1           35s        48s
+quick-starter-taskc-191-20230416142337   1/1           35s        45s
+# now, D0-D2 are running in parallel
+quick-starter-taskd-014-20230416142415   0/1           7s         7s
+quick-starter-taskd-036-20230416142406   0/1           16s        16s
+quick-starter-taskd-079-20230416142417   0/1           5s         5s
 ```
 
 ### 6. Check the result
-
+Let's check the final result.
 ```bash
 $ minikube kubectl --  get jobs -n kannon-quick-starter
 NAME                                     COMPLETIONS   DURATION   AGE
-master-job-quick-starter                 1/1           11m        14m
-quick-starter-taskc-014-20230413142312   1/1           3m5s       14m
-quick-starter-taskc-036-20230413142309   1/1           3m5s       14m
-quick-starter-taskc-191-20230413142306   1/1           3m6s       14m
-quick-starter-taskd-079-20230413142613   1/1           3m7s       11m
-quick-starter-taskd-118-20230413142615   1/1           3m6s       11m
-quick-starter-taskd-143-20230413142617   1/1           3m7s       11m
-quick-starter-taske-071-20230413142923   1/1           4m5s       8m12s
-quick-starter-taske-091-20230413142924   1/1           4m6s       8m11s
-quick-starter-taske-146-20230413142922   1/1           4m5s       8m13s
+master-job-quick-starter                 1/1           2m28s      3m13s
+# C0-C2 are done in parallel
+quick-starter-taskc-069-20230416142331   1/1           35s        2m59s
+quick-starter-taskc-169-20230416142334   1/1           35s        2m56s
+quick-starter-taskc-191-20230416142337   1/1           35s        2m53s
+# D0-D2 are done in parallel
+quick-starter-taskd-014-20230416142415   1/1           36s        2m15s
+quick-starter-taskd-036-20230416142406   1/1           35s        2m24s
+quick-starter-taskd-079-20230416142417   1/1           36s        2m13s
+# E0-E2 are done in parallel
+quick-starter-taske-118-20230416142442   1/1           34s        108s
+quick-starter-taske-143-20230416142455   1/1           34s        95s
+quick-starter-taske-146-20230416142456   1/1           34s        94s
 ```
 
 All jobs are completed successfully!
-Duration for the master job to be completed is `11m`.
-Compared to the case without `kannon`, it is almost **3x** faster!
+Duration for the master job to be completed is `2m28s`.
+Compared to the case without `kannon`, it is almost **2x** faster!
 
 |using kannon? | duration |
 |---|---|
-|yes | **11 minutes**|
-|no | 31 minutes|
+|yes | **2m28s**|
+|no | 5m09s|
 
 
-### (Optional) Delete cache to retry this quick starter.
+### (Optional) Clear the cache to rerun the tasks
 ```bash
 $ minikube kubectl -- apply -f k8s/temp-pod.yaml
 pod/temp-pod created
@@ -152,4 +151,12 @@ Within `temp-pod`, execute the following commands.
 log    tasks
 / # rm -rf cache/*
 ```
-Now, all caches save on the persistent volume `kannon-cache` are cleared.
+Now, all caches saved on the persistent volume `kannon-cache` are cleared.
+
+### (Optional) Clean up
+```bash
+# Delete namespace
+$ minikube kubectl -- delete ns kannon-quick-starter
+# Delete persistent volume
+$ minikube kubectl -- delete pv kannon-cache
+```
