@@ -45,7 +45,6 @@ column_limit = 160
 ignore_patterns = [
   ".venv/*",
   ".tox/*",
-  "examples/*"
 ]
 
 [tool.isort]
