@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 import unittest
-from typing import Callable
 from unittest.mock import MagicMock
 
 import gokart
@@ -56,20 +55,6 @@ class MockKannon(Kannon):
 
     def _exec_bullet_task(self, task: MockTaskOnBullet) -> None:
         task.run()
-
-
-def return_true_after_func(sec: float) -> Callable[[], bool]:
-    called_at: float | None = None
-
-    def return_true_after() -> bool:
-        nonlocal called_at
-        if called_at is None:
-            called_at = time.time()
-            return False
-
-        return time.time() > called_at + sec
-
-    return return_true_after
 
 
 class TestConsumeTaskQueue(unittest.TestCase):
