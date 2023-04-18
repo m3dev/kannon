@@ -9,7 +9,7 @@ from kubernetes import client
 from kannon import Kannon
 
 
-class TestStringMethods(unittest.TestCase):
+class TestCreateTaskQueue(unittest.TestCase):
 
     def test_create_task_queue(self) -> None:
 
