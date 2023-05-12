@@ -76,7 +76,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         class Example(gokart.TaskOnKart):
             pass
 
-        serialized_task = gokart.TaskInstanceParameter().serialize(Example())
+        path_to_pkl = "path/to/obj"
         template_job = self._get_template_job()
         master = Kannon(
             api_instance=None,
@@ -88,7 +88,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         # set os env
         os.environ.update({"TASK_WORKSPACE_DIRECTORY": "/cache"})
         child_job_name = "test-job"
-        child_job = master._create_child_job_object(child_job_name, serialized_task)
+        child_job = master._create_child_job_object(child_job_name, path_to_pkl)
 
         # following should be copied from template_job
         self.assertEqual(child_job.api_version, template_job.api_version)
@@ -99,7 +99,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         self.assertEqual(child_job.spec.template.spec.containers[0].image, template_job.spec.template.spec.containers[0].image)
         self.assertEqual(child_job.spec.template.spec.restart_policy, template_job.spec.template.spec.restart_policy)
         # following should be overwritten
-        self.assertEqual(child_job.spec.template.spec.containers[0].command, ["python", __file__, "--serialized-task", f"'{serialized_task}'"])
+        self.assertEqual(child_job.spec.template.spec.containers[0].command, ["python", __file__, "--task-pkl-path", f"'{path_to_pkl}'"])
         self.assertEqual(child_job.metadata.name, child_job_name)
         # envvar TASK_WORKSPACE_DIRECTORY should be inherited
         child_env = child_job.spec.template.spec.containers[0].env
@@ -111,7 +111,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         class Example(gokart.TaskOnKart):
             pass
 
-        serialized_task = gokart.TaskInstanceParameter().serialize(Example())
+        path_to_pkl = "path/to/obj"
         template_job = self._get_template_job()
         master = Kannon(
             api_instance=None,
@@ -123,7 +123,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         # set os env
         os.environ.update({"TASK_WORKSPACE_DIRECTORY": "/cache", "MY_ENV0": "env0", "MY_ENV1": "env1"})
         child_job_name = "test-job"
-        child_job = master._create_child_job_object(child_job_name, serialized_task)
+        child_job = master._create_child_job_object(child_job_name, path_to_pkl)
 
         child_env = child_job.spec.template.spec.containers[0].env
         self.assertEqual(len(child_env), 3)
@@ -136,7 +136,7 @@ class TestCreateChildJobObject(unittest.TestCase):
         class Example(gokart.TaskOnKart):
             pass
 
-        serialized_task = gokart.TaskInstanceParameter().serialize(Example())
+        path_to_pkl = "path/to/obj"
         template_job = self._get_template_job()
         template_job.spec.template.spec.containers[0].command = ["dummy-command"]
         master = Kannon(
@@ -149,14 +149,14 @@ class TestCreateChildJobObject(unittest.TestCase):
         # set os env
         os.environ.update({"TASK_WORKSPACE_DIRECTORY": "/cache"})
         with self.assertRaises(AssertionError):
-            master._create_child_job_object("test-job", serialized_task)
+            master._create_child_job_object("test-job", path_to_pkl)
 
     def test_fail_default_env_not_exist(self) -> None:
 
         class Example(gokart.TaskOnKart):
             pass
 
-        serialized_task = gokart.TaskInstanceParameter().serialize(Example())
+        path_to_pkl = "path/to/obj"
         template_job = self._get_template_job()
 
         cases = [None, ["TASK_WORKSPACE_DIRECTORY", "MY_ENV0", "MY_ENV1"]]
@@ -170,7 +170,7 @@ class TestCreateChildJobObject(unittest.TestCase):
                     env_to_inherit=case,
                 )
                 with self.assertRaises(ValueError):
-                    master._create_child_job_object("test-job", serialized_task)
+                    master._create_child_job_object("test-job", path_to_pkl)
 
 
 if __name__ == '__main__':
