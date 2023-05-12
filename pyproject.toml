@@ -18,7 +18,6 @@ pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)"
 python = "^3.8,<3.12"
 gokart = "^1.2.2"
 kubernetes = "^26.1.0"
-fire = "^0.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pyproject-flake8 = "5.0.4"
