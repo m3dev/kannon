@@ -75,6 +75,7 @@ class Kannon:
             # execute task
             if isinstance(task, TaskOnBullet):
                 if self.max_child_jobs is not None and len(running_task_ids) >= self.max_child_jobs:
+                    task_queue.append(task)  # re-enqueue task to check later
                     logger.info(f"Reach max_child_jobs, waiting to run task {self._gen_task_info(task)} on child job...")
                     continue
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
