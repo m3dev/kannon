@@ -191,39 +191,42 @@ class TestConsumeTaskQueue(unittest.TestCase):
         c2_task_info = master._gen_task_info(c2)
         c3_task_info = master._gen_task_info(c3)
         root_task_info = master._gen_task_info(root_task)
-        self.assertEqual(cm.output, [
-            'INFO:kannon.master:Creating task queue...',
-            f'INFO:kannon.master:Task {c1_task_info} is pushed to task queue',
-            f'INFO:kannon.master:Task {c2_task_info} is pushed to task queue',
-            f'INFO:kannon.master:Task {c3_task_info} is pushed to task queue',
-            f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
-            'INFO:kannon.master:Consuming task queue...',
-            f'INFO:kannon.master:Checking if task {c1_task_info} is executable...',
-            f'INFO:kannon.master:Trying to run task {c1_task_info} on child job...',
-            f'INFO:kannon.master:Checking if task {c2_task_info} is executable...',
-            f'INFO:kannon.master:Trying to run task {c2_task_info} on child job...',
-            # c3 has to wait
-            f'INFO:kannon.master:Checking if task {c3_task_info} is executable...',
-            f'INFO:kannon.master:Reach max_child_jobs, waiting to run task {c3_task_info} on child job...',
-            f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
-            f'INFO:kannon.master:Task {c1_task_info} is still running on child job.',
-            f'INFO:kannon.master:Task {c2_task_info} is still running on child job.',
-            f'INFO:kannon.master:Checking if task {c3_task_info} is executable...',
-            f'INFO:kannon.master:Reach max_child_jobs, waiting to run task {c3_task_info} on child job...',
-            f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
-            f'INFO:kannon.master:Task {c1_task_info} is already completed.',
-            f'INFO:kannon.master:Task {c2_task_info} is already completed.',
-            # now c3 can start
-            f'INFO:kannon.master:Checking if task {c3_task_info} is executable...',
-            f'INFO:kannon.master:Trying to run task {c3_task_info} on child job...',
-            f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
-            f'INFO:kannon.master:Task {c3_task_info} is still running on child job.',
-            f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
-            f'INFO:kannon.master:Executing task {root_task_info} on master job...',
-            f'INFO:kannon.master:Completed task {root_task_info} on master job.',
-            f'INFO:kannon.master:Task {c3_task_info} is already completed.',
-            'INFO:kannon.master:All tasks completed!',
-        ])
+        self.assertEqual(
+            cm.output,
+            [
+                'INFO:kannon.master:Creating task queue...',
+                f'INFO:kannon.master:Task {c1_task_info} is pushed to task queue',
+                f'INFO:kannon.master:Task {c2_task_info} is pushed to task queue',
+                f'INFO:kannon.master:Task {c3_task_info} is pushed to task queue',
+                f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
+                'INFO:kannon.master:Consuming task queue...',
+                f'INFO:kannon.master:Checking if task {c1_task_info} is executable...',
+                f'INFO:kannon.master:Trying to run task {c1_task_info} on child job...',
+                f'INFO:kannon.master:Checking if task {c2_task_info} is executable...',
+                f'INFO:kannon.master:Trying to run task {c2_task_info} on child job...',
+                # c3 has to wait
+                f'INFO:kannon.master:Checking if task {c3_task_info} is executable...',
+                f'INFO:kannon.master:Reach max_child_jobs, waiting to run task {c3_task_info} on child job...',
+                f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
+                f'INFO:kannon.master:Task {c1_task_info} is still running on child job.',
+                f'INFO:kannon.master:Task {c2_task_info} is still running on child job.',
+                f'INFO:kannon.master:Checking if task {c3_task_info} is executable...',
+                f'INFO:kannon.master:Reach max_child_jobs, waiting to run task {c3_task_info} on child job...',
+                f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
+                f'INFO:kannon.master:Task {c1_task_info} is already completed.',
+                f'INFO:kannon.master:Task {c2_task_info} is already completed.',
+                # now c3 can start
+                f'INFO:kannon.master:Checking if task {c3_task_info} is executable...',
+                f'INFO:kannon.master:Trying to run task {c3_task_info} on child job...',
+                f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
+                f'INFO:kannon.master:Task {c3_task_info} is still running on child job.',
+                f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
+                f'INFO:kannon.master:Executing task {root_task_info} on master job...',
+                f'INFO:kannon.master:Completed task {root_task_info} on master job.',
+                f'INFO:kannon.master:Task {c3_task_info} is already completed.',
+                'INFO:kannon.master:All tasks completed!',
+            ])
+
 
 if __name__ == '__main__':
     unittest.main()
