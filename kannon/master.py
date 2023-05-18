@@ -1,6 +1,5 @@
 import logging
 import os
-import pickle
 from collections import deque
 from copy import deepcopy
 from time import sleep
