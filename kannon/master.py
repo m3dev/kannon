@@ -153,6 +153,10 @@ class Kannon:
     @staticmethod
     def _gen_task_info(task: gokart.TaskOnKart) -> str:
         return f"{task.get_task_family()}_{task.make_unique_id()}"
+    
+    @staticmethod
+    def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
+        return os.path.join(task.workspace_directory, f'task_obj_{task.make_unique_id()}')
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
