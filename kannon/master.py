@@ -7,6 +7,7 @@ from time import sleep
 from typing import Deque, Dict, List, Optional, Set
 
 import gokart
+from gokart.target import make_target
 from kubernetes import client
 from luigi.task import flatten
 
@@ -108,11 +109,11 @@ class Kannon:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
-        # Run on child job
-        # save task instance as pickle object
+        # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
-        with open(pkl_path, "wb") as f:
-            pickle.dump(task, f)
+        target = make_target(pkl_path)
+        target.dump(task)
+        # Run on child job
         job_name = gen_job_name(f"{self.job_prefix}-{task.get_task_family()}")
         job = self._create_child_job_object(
             job_name=job_name,
@@ -156,7 +157,7 @@ class Kannon:
 
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
-        return os.path.join(task.workspace_directory, f'task_obj_{task.make_unique_id()}')
+        return os.path.join(task.workspace_directory, f'task_obj_{task.make_unique_id()}.pkl')
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
