@@ -1,10 +1,10 @@
 import logging
 import os
+import pickle
 from collections import deque
 from copy import deepcopy
 from time import sleep
 from typing import Deque, Dict, List, Optional, Set
-import pickle
 
 import gokart
 from kubernetes import client
@@ -153,7 +153,7 @@ class Kannon:
     @staticmethod
     def _gen_task_info(task: gokart.TaskOnKart) -> str:
         return f"{task.get_task_family()}_{task.make_unique_id()}"
-    
+
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, f'task_obj_{task.make_unique_id()}')
