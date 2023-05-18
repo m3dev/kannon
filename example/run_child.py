@@ -3,8 +3,8 @@ import logging
 
 import fire
 import gokart
-from gokart.target import make_target
 import luigi
+from gokart.target import make_target
 
 logging.basicConfig(level=logging.INFO)
 
