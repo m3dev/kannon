@@ -3,19 +3,18 @@ import logging
 
 import fire
 import gokart
+from gokart.target import make_target
 import luigi
-# Import task definition
-import tasks  # noqa: F401
 
 logging.basicConfig(level=logging.INFO)
 
 
-def main(serialized_task: str) -> None:
+def main(task_pkl_path: str) -> None:
     # Load luigi config
     luigi.configuration.LuigiConfigParser.add_config_path("./conf/base.ini")
 
     # Parse a serialized gokart.TaskOnKart
-    task: gokart.TaskOnKart = gokart.TaskInstanceParameter().parse(serialized_task)
+    task: gokart.TaskOnKart = make_target(task_pkl_path).load()
 
     # Run gokart.build
     gokart.build(task)
