@@ -6,6 +6,7 @@ from time import sleep
 from typing import Deque, Dict, List, Optional, Set
 
 import gokart
+from gokart.target import make_target
 from kubernetes import client
 from luigi.task import flatten
 
@@ -107,25 +108,27 @@ class Kannon:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
+        # Save task instance as pickle object
+        pkl_path = self._gen_pkl_path(task)
+        make_target(pkl_path).dump(task)
         # Run on child job
-        serialized_task = gokart.TaskInstanceParameter().serialize(task)
         job_name = gen_job_name(f"{self.job_prefix}-{task.get_task_family()}")
         job = self._create_child_job_object(
             job_name=job_name,
-            serialized_task=serialized_task,
+            task_pkl_path=pkl_path,
         )
         create_job(self.api_instance, job, self.namespace)
         logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
         task_unique_id = task.make_unique_id()
         self.task_id_to_job_name[task_unique_id] = job_name
 
-    def _create_child_job_object(self, job_name: str, serialized_task: str) -> client.V1Job:
+    def _create_child_job_object(self, job_name: str, task_pkl_path: str) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
         cmd = [
             "python",
             self.path_child_script,
-            "--serialized-task",
-            f"'{serialized_task}'",
+            "--task-pkl-path",
+            f"'{task_pkl_path}'",
         ]
         job = deepcopy(self.template_job)
         # replace command
@@ -149,6 +152,10 @@ class Kannon:
     @staticmethod
     def _gen_task_info(task: gokart.TaskOnKart) -> str:
         return f"{task.get_task_family()}_{task.make_unique_id()}"
+
+    @staticmethod
+    def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
+        return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
