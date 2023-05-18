@@ -155,7 +155,7 @@ class Kannon:
 
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
-        return os.path.join(task.workspace_directory, f'task_obj_{task.make_unique_id()}.pkl')
+        return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
