@@ -111,8 +111,7 @@ class Kannon:
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
-        target = make_target(pkl_path)
-        target.dump(task)
+        make_target(pkl_path).dump(task)
         # Run on child job
         job_name = gen_job_name(f"{self.job_prefix}-{task.get_task_family()}")
         job = self._create_child_job_object(
