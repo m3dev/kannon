@@ -40,7 +40,7 @@ class Kannon:
         if env_to_inherit is None:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
-        
+
         self.task_id_to_job_name: Dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
@@ -159,7 +159,7 @@ class Kannon:
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
-    
+
     # def _cached_make_unique_id(self, task: gokart.TaskOnKart) -> str:
     #     if task in self.task_to_unique_id:
     #         return self.task_to_unique_id[task]
