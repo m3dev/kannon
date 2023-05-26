@@ -89,10 +89,12 @@ class Kannon:
     def _create_task_queue(self, root_task: gokart.TaskOnKart) -> Deque[gokart.TaskOnKart]:
         task_queue: Deque[gokart.TaskOnKart] = deque()
         visited_task_ids: Set[str] = set()
+        enqueued_task_ids: Set[str] = set()
 
         def _rec_enqueue_task(task: gokart.TaskOnKart) -> None:
             """Traversal task tree in post-order to push tasks into task queue."""
             nonlocal task_queue, visited_task_ids
+            
             visited_task_ids.add(task.make_unique_id())
             # run children
             children = flatten(task.requires())
@@ -101,8 +103,11 @@ class Kannon:
                     continue
                 _rec_enqueue_task(child)
 
+            if task.make_unique_id() in enqueued_task_ids:
+                return
             task_queue.append(task)
-            logger.info(f"Task {self._gen_task_info(task)} is pushed to task queue")
+            enqueued_task_ids.add(task.make_unique_id())
+            logger.info(f"Task {self._gen_task_info(task)} is pushed into task queue")
 
         _rec_enqueue_task(root_task)
         return task_queue
