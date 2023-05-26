@@ -3,7 +3,7 @@ import os
 from collections import deque
 from copy import deepcopy
 from time import sleep
-from typing import Deque, Dict, List, Optional, Set
+from typing import Deque, List, Optional, Set
 
 import gokart
 from gokart.target import make_target
@@ -41,9 +41,10 @@ class Kannon:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
 
-        self.task_id_to_job_name: Dict[str, str] = dict()
-
     def build(self, root_task: gokart.TaskOnKart) -> None:
+        # cache unique_id for all tasks
+        logger.info("Caching unique_id for all tasks...")
+        root_task.make_unique_id()
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)
@@ -156,6 +157,12 @@ class Kannon:
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
+
+    # def _cached_make_unique_id(self, task: gokart.TaskOnKart) -> str:
+    #     if task in self.task_to_unique_id:
+    #         return self.task_to_unique_id[task]
+    #     self.task_to_unique_id[task] = task.make_unique_id()
+    #     return self.task_to_unique_id[task]
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
