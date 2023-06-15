@@ -105,11 +105,10 @@ class Kannon:
             task_queue.append(task)
 
             if len(task_queue) % 100 == 0:
-                logger.info(f"Task queue size: {len(task_queue)}")
-            # logger.info(f"Task {self._gen_task_info(task)} is pushed into task queue")
+                logger.info(f"{len(task_queue)} tasks are pushed into task queue.")
 
         _rec_enqueue_task(root_task)
-        logger.info(f"Task queue size: {len(task_queue)}")
+        logger.info(f"Total tasks in task queue: {len(task_queue)}")
         return task_queue
 
     def _exec_gokart_task(self, task: gokart.TaskOnKart) -> None:
@@ -168,12 +167,6 @@ class Kannon:
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
-
-    # def _cached_make_unique_id(self, task: gokart.TaskOnKart) -> str:
-    #     if task in self.task_to_unique_id:
-    #         return self.task_to_unique_id[task]
-    #     self.task_to_unique_id[task] = task.make_unique_id()
-    #     return self.task_to_unique_id[task]
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
