@@ -44,9 +44,6 @@ class Kannon:
         self.task_id_to_job_name: Dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
-        # cache unique_id for all tasks
-        logger.info("Caching unique_id for all tasks...")
-        root_task.make_unique_id()
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)
@@ -103,9 +100,7 @@ class Kannon:
                 _rec_enqueue_task(child)
 
             task_queue.append(task)
-
-            if len(task_queue) % 100 == 0:
-                logger.info(f"{len(task_queue)} tasks are pushed into task queue.")
+            logger.info(f"Task {self._gen_task_info(task)} is pushed to task queue")
 
         _rec_enqueue_task(root_task)
         logger.info(f"Total tasks in task queue: {len(task_queue)}")
