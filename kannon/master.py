@@ -118,7 +118,7 @@ class Kannon:
         pkl_path = self._gen_pkl_path(task)
         make_target(pkl_path).dump(task)
         # Run on child job
-        job_name = gen_job_name(f"{self.job_prefix}-{task.get_task_family()}")
+        job_name = gen_job_name(f"child-{task.get_task_family()}")
         job = self._create_child_job_object(
             job_name=job_name,
             task_pkl_path=pkl_path,
