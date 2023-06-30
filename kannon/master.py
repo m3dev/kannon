@@ -49,16 +49,25 @@ class Kannon:
         task_queue = self._create_task_queue(root_task)
 
         # consume task queue
-        launched_task_ids: Set[str] = set()
+        running_task_ids: Set[str] = set()
         logger.info("Consuming task queue...")
         while task_queue:
             task = task_queue.popleft()
             if task.complete():
                 logger.info(f"Task {self._gen_task_info(task)} is already completed.")
                 continue
-            if task.make_unique_id() in launched_task_ids:
+            if task.make_unique_id() in running_task_ids:
+                # check if task is still running on child job
+                job_name = self.task_id_to_job_name[task.make_unique_id()]
+                job_status = get_job_status(
+                    self.api_instance,
+                    job_name,
+                    self.namespace,
+                )
+                if job_status == JobStatus.FAILED:
+                    raise RuntimeError(f"Task {self._gen_task_info(task)} on job {job_name} has failed.")
                 logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
-                task_queue.append(task)
+                task_queue.append(task)  # re-enqueue task to check if it is done
                 continue
 
             # TODO: enable user to specify duration to sleep for each task
@@ -72,7 +81,7 @@ class Kannon:
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 self._exec_bullet_task(task)
-                launched_task_ids.add(task.make_unique_id())  # mark as already launched task
+                running_task_ids.add(task.make_unique_id())  # mark as already launched task
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
