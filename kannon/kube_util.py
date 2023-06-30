@@ -13,6 +13,7 @@ class JobStatus(enum.Enum):
     SUCCEEDED = 1
     FAILED = 2
 
+
 # Max length of job name is 63.
 # https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 JOB_NAME_MAX_LENGTH = 63
