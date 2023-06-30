@@ -118,15 +118,14 @@ class Kannon:
         pkl_path = self._gen_pkl_path(task)
         make_target(pkl_path).dump(task)
         # Run on child job
-        job_name = gen_job_name(f"child-{task.get_task_family()}")
         job = self._create_child_job_object(
-            job_name=job_name,
+            job_name=self.job_prefix,
             task_pkl_path=pkl_path,
         )
         create_job(self.api_instance, job, self.namespace)
-        logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
+        logger.info(f"Created child job {self.job_prefix} with task {self._gen_task_info(task)}")
         task_unique_id = task.make_unique_id()
-        self.task_id_to_job_name[task_unique_id] = job_name
+        self.task_id_to_job_name[task_unique_id] = self.job_prefix
 
     def _create_child_job_object(self, job_name: str, task_pkl_path: str) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
