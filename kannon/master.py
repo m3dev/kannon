@@ -49,14 +49,13 @@ class Kannon:
         task_queue = self._create_task_queue(root_task)
 
         # consume task queue
-        running_task_ids: Set[str] = set()
         logger.info("Consuming task queue...")
         while task_queue:
             task = task_queue.popleft()
             if task.complete():
                 logger.info(f"Task {self._gen_task_info(task)} is already completed.")
                 continue
-            if task.make_unique_id() in running_task_ids:
+            if task.make_unique_id() in self.task_id_to_job_name:
                 # check if task is still running on child job
                 job_name = self.task_id_to_job_name[task.make_unique_id()]
                 job_status = get_job_status(
@@ -81,7 +80,6 @@ class Kannon:
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 self._exec_bullet_task(task)
-                running_task_ids.add(task.make_unique_id())  # mark as already launched task
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
@@ -134,8 +132,7 @@ class Kannon:
         )
         create_job(self.api_instance, job, self.namespace)
         logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
-        task_unique_id = task.make_unique_id()
-        self.task_id_to_job_name[task_unique_id] = job_name
+        self.task_id_to_job_name[task.make_unique_id()] = job_name
 
     def _create_child_job_object(self, job_name: str, task_pkl_path: str) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
