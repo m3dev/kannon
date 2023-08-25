@@ -174,6 +174,8 @@ class Kannon:
                 job.metadata.owner_references.append(owner_reference)
             else:
                 job.metadata.owner_references = [owner_reference]
+        else:
+            logger.warning("Owner reference is not set because master pod info is not provided.")
 
         return job
 
