@@ -27,6 +27,8 @@ class Kannon:
         job_prefix: str,
         path_child_script: str = "./run_child.py",
         env_to_inherit: Optional[List[str]] = None,
+        master_pod_name: Optional[str] = None,
+        master_pod_uid: Optional[str] = None,
     ) -> None:
         # validation
         if not os.path.exists(path_child_script):
@@ -40,6 +42,8 @@ class Kannon:
         if env_to_inherit is None:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
+        self.master_pod_name = master_pod_name
+        self.master_pod_uid = master_pod_uid
 
         self.task_id_to_job_name: Dict[str, str] = dict()
 
@@ -158,6 +162,18 @@ class Kannon:
         job.spec.template.spec.containers[0].env = child_envs
         # replace job name
         job.metadata.name = job_name
+        # add owner reference from child to parent if master pod info is available
+        if self.master_pod_name and self.master_pod_uid:
+            owner_reference = client.V1OwnerReference(
+                api_version="batch/v1",
+                kind="Pod",
+                name=self.master_pod_name,  # owner pod name
+                uid=self.master_pod_uid,  # owner pod uid
+            )
+            if job.metadata.owner_references:
+                job.metadata.owner_references.append(owner_reference)
+            else:
+                job.metadata.owner_references = [owner_reference]
 
         return job
 
