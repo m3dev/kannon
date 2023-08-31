@@ -35,6 +35,11 @@ class inherits_config_params:
 
             @classmethod
             def get_param_values(cls, params, args, kwargs):  # type: ignore
+                try:
+                    # if config params can be injected, then inject
+                    cls.inject_config_params()
+                except Exception:
+                    pass
                 kwargs_dict = deepcopy(cls.__config_params)
                 kwargs_dict.update(kwargs)
                 return super(Wrapped, cls).get_param_values(params, args, kwargs_dict)
