@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any, Dict, Optional, Type
 
 import gokart
@@ -29,13 +30,13 @@ class inherits_config_params:
             def inject_config_params(cls) -> None:
                 for param_key, param_value in self._config_class().param_kwargs.items():
                     task_param_key = self._parameter_alias.get(param_key, param_key)
-
-                    if hasattr(cls, task_param_key) and task_param_key not in cls.__config_params:
+                    if hasattr(cls, task_param_key):
                         cls.__config_params[task_param_key] = param_value
 
             @classmethod
             def get_param_values(cls, params, args, kwargs):  # type: ignore
-                cls.__config_params.update(kwargs)
-                return super(Wrapped, cls).get_param_values(params, args, cls.__config_params)
+                kwargs_dict = deepcopy(cls.__config_params)
+                kwargs_dict.update(kwargs)
+                return super(Wrapped, cls).get_param_values(params, args, kwargs_dict)
 
         return Wrapped
