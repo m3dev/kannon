@@ -51,12 +51,6 @@ class Kannon:
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)
-        for task in task_queue:
-            # If task is decorated with inherits_config_params, then unwrap it.
-            if hasattr(task, "__is_decorated_inherits_config_params"):
-                assert task.__is_decorated_inherits_config_params
-                logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params")
-                task.inject_config_params()  # inject config param on master job
 
         # consume task queue
         logger.info("Consuming task queue...")
@@ -131,6 +125,11 @@ class Kannon:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
+        # If task is decorated with inherits_config_params, then unwrap it.
+        if hasattr(task, "__is_decorated_inherits_config_params"):
+            assert task.__is_decorated_inherits_config_params
+            logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params")
+            task.set_injection_flag(False)
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
         make_target(pkl_path).dump(task)

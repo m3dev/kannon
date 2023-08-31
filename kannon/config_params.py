@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Any, Dict, Optional, Type
 
 import gokart
@@ -25,9 +24,11 @@ class inherits_config_params:
         class Wrapped(task_class):
             __is_decorated_inherits_config_params = True
             __config_params: Dict[str, Any] = dict()
+            __do_injection = True
 
             @classmethod
             def inject_config_params(cls) -> None:
+                cls.__config_params.clear()  # clear config param cache
                 for param_key, param_value in self._config_class().param_kwargs.items():
                     task_param_key = self._parameter_alias.get(param_key, param_key)
                     if hasattr(cls, task_param_key):
@@ -35,13 +36,15 @@ class inherits_config_params:
 
             @classmethod
             def get_param_values(cls, params, args, kwargs):  # type: ignore
-                try:
-                    # if config params can be injected, then inject
+                if cls.__do_injection:
                     cls.inject_config_params()
-                except Exception:
-                    pass
-                kwargs_dict = deepcopy(cls.__config_params)
-                kwargs.update(kwargs_dict)
+                for param_key, param_value in cls.__config_params.items():
+                    if hasattr(cls, param_key) and param_key not in kwargs:
+                        kwargs[param_key] = param_value
                 return super(Wrapped, cls).get_param_values(params, args, kwargs)
+
+            @classmethod
+            def set_injection_flag(cls, flag: bool):  # type: ignore
+                cls.__do_injection = flag
 
         return Wrapped
