@@ -30,8 +30,8 @@ class inherits_config_params:
                 for param_key, param_value in self._config_class().param_kwargs.items():
                     task_param_key = self._parameter_alias.get(param_key, param_key)
 
-                    if hasattr(cls, task_param_key):
-                        cls.__config_params[task_param_key] = param_value
+                    # if hasattr(cls, task_param_key):
+                    cls.__config_params[task_param_key] = param_value
 
             @classmethod
             def get_param_values(cls, params, args, kwargs):  # type: ignore
