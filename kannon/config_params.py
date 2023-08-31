@@ -22,7 +22,7 @@ class inherits_config_params:
         # wrap task to prevent task name from being changed
         @luigi.task._task_wraps(task_class)
         class Wrapped(task_class):
-            __is_decorated_inherits_config_params = True
+            is_decorated_inherits_config_params = True
             __config_params: Dict[str, Any] = dict()
             __do_injection = True
 

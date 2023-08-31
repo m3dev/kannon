@@ -126,8 +126,8 @@ class Kannon:
 
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
         # If task is decorated with inherits_config_params, then unwrap it.
-        if hasattr(task, "__is_decorated_inherits_config_params"):
-            assert task.__is_decorated_inherits_config_params
+        if hasattr(task, "is_decorated_inherits_config_params"):
+            assert task.is_decorated_inherits_config_params
             logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params")
             task.set_injection_flag(False)
         # Save task instance as pickle object
