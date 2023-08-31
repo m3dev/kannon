@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Type
 
-import gokart.config_params
+import gokart
 import luigi
 
 
@@ -30,18 +30,12 @@ class inherits_config_params:
                 for param_key, param_value in self._config_class().param_kwargs.items():
                     task_param_key = self._parameter_alias.get(param_key, param_key)
 
-                    # if hasattr(cls, task_param_key):
-                    cls.__config_params[task_param_key] = param_value
+                    if hasattr(cls, task_param_key) and task_param_key not in cls.__config_params:
+                        cls.__config_params[task_param_key] = param_value
 
             @classmethod
             def get_param_values(cls, params, args, kwargs):  # type: ignore
-                # fill from config params that are also included in kwargs
-                for param_key, param_value in cls.__config_params.items():
-                    task_param_key = self._parameter_alias.get(param_key, param_key)
-
-                    if task_param_key not in kwargs:
-                        kwargs[task_param_key] = param_value
-
-                return super(Wrapped, cls).get_param_values(params, args, kwargs)
+                cls.__config_params.update(kwargs)
+                return super(Wrapped, cls).get_param_values(params, args, cls.__config_params)
 
         return Wrapped
