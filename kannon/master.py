@@ -129,6 +129,7 @@ class Kannon:
         if hasattr(task, "is_decorated_inherits_config_params"):
             assert task.is_decorated_inherits_config_params
             logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params")
+            task.inject_config_params()
             task.set_injection_flag(False)
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
