@@ -84,6 +84,7 @@ class Kannon:
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 if hasattr(task, "is_decorated_inherits_config_params"):
+                    task.inject_config_params()
                     task.set_injection_flag(False)
                     logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params.")
                     self._exec_bullet_task(task)
