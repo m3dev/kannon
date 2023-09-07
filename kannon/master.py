@@ -126,7 +126,7 @@ class Kannon:
 
     def _exec_bullet_task(self, task: TaskOnBullet) -> None:
         # If task is decorated with inherits_config_params, then unwrap it.
-        logger.debug(f"Task.type = {type(task)}")
+        logger.info(f"Task on bullet type = {type(task)}")
         if hasattr(task, "is_decorated_inherits_config_params"):
             assert task.is_decorated_inherits_config_params
             logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params")
