@@ -85,7 +85,7 @@ class Kannon:
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 if hasattr(task, "is_decorated_inherits_config_params"):
                     task.inject_config_params()
-                    task.set_injection_flag(False)
+                    task.set_injection_flag(False) # prevent injection in child pod
                     logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params.")
                     self._exec_bullet_task(task)
                     task.set_injection_flag(True)
@@ -94,7 +94,13 @@ class Kannon:
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
-                self._exec_gokart_task(task)
+                if hasattr(task, "is_decorated_inherits_config_params"):
+                    logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params.")
+                    task.set_injection_flag(True) # inject in master pod
+                    self._exec_gokart_task(task)
+                    task.set_injection_flag(False) # prevent injection in child pod
+                else:
+                    self._exec_gokart_task(task)
                 logger.info(f"Completed task {self._gen_task_info(task)} on master job.")
             else:
                 raise TypeError(f"Invalid task type: {type(task)}")
