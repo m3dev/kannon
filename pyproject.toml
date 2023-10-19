@@ -16,7 +16,7 @@ pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)"
 
 [tool.poetry.dependencies]
 python = "^3.8,<3.12"
-gokart = "^1.2.2"
+gokart = { git = "https://github.com/maronuu/gokart.git", branch = "feature/make_target_ini" }
 kubernetes = "^26.1.0"
 
 [tool.poetry.group.dev.dependencies]
