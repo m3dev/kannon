@@ -1,5 +1,6 @@
 """ This script requires to be defined by user. """
 import logging
+from typing import List
 
 import fire
 import gokart
@@ -9,9 +10,11 @@ from gokart.target import make_target
 logging.basicConfig(level=logging.INFO)
 
 
-def main(task_pkl_path: str) -> None:
+def main(task_pkl_path: str, remote_config_paths: List[str]) -> None:
     # Load luigi config
     luigi.configuration.LuigiConfigParser.add_config_path("./conf/base.ini")
+    for path in remote_config_paths:
+        luigi.configuration.LuigiConfigParser.add_config_path(path)
 
     # Parse a serialized gokart.TaskOnKart
     task: gokart.TaskOnKart = make_target(task_pkl_path).load()

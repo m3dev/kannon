@@ -6,6 +6,7 @@ from time import sleep
 from typing import Deque, Dict, List, Optional, Set
 
 import gokart
+import luigi
 from gokart.target import make_target
 from kubernetes import client
 from luigi.task import flatten
@@ -48,6 +49,19 @@ class Kannon:
         self.task_id_to_job_name: Dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
+        # check all config file paths exists
+        luigi_parser_instance = luigi.configuration.get_config()
+        config_paths = luigi_parser_instance._config_paths
+        for config_path in config_paths:
+            assert os.path.exists(config_path), f"Config file {config_path} does not exits."
+        # save configs to remote cache
+        workspace_dir = os.environ.get("TASK_WORKSPACE_DIRECTORY")
+        remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
+        remote_config_paths = [os.path.join(remote_config_dir, os.path.basename(config_path)) for config_path in config_paths]
+        for remote_config_path in remote_config_paths:
+            with open(config_path, "r") as f:
+                make_target(remote_config_path).dump(f)
+
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)
@@ -83,24 +97,11 @@ class Kannon:
             # execute task
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
-                if hasattr(task, "is_decorated_inherits_config_params"):
-                    task.inject_config_params()
-                    task.set_injection_flag(False) # prevent injection in child pod
-                    logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params.")
-                    self._exec_bullet_task(task)
-                    task.set_injection_flag(True)
-                else:
-                    self._exec_bullet_task(task)
+                self._exec_bullet_task(task, remote_config_paths)
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
-                if hasattr(task, "is_decorated_inherits_config_params"):
-                    logger.info(f"Task {self._gen_task_info(task)} is decorated with inherits_config_params.")
-                    task.set_injection_flag(True) # inject in master pod
-                    self._exec_gokart_task(task)
-                    task.set_injection_flag(False) # prevent injection in child pod
-                else:
-                    self._exec_gokart_task(task)
+                self._exec_gokart_task(task)
                 logger.info(f"Completed task {self._gen_task_info(task)} on master job.")
             else:
                 raise TypeError(f"Invalid task type: {type(task)}")
@@ -137,8 +138,7 @@ class Kannon:
         except Exception:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
-    def _exec_bullet_task(self, task: TaskOnBullet) -> None:
-        # If task is decorated with inherits_config_params, then unwrap it.
+    def _exec_bullet_task(self, task: TaskOnBullet, remote_config_paths: list) -> None:
         logger.info(f"Task on bullet type = {type(task)}")
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
@@ -148,18 +148,26 @@ class Kannon:
         job = self._create_child_job_object(
             job_name=job_name,
             task_pkl_path=pkl_path,
+            remote_config_paths=remote_config_paths,
         )
         create_job(self.api_instance, job, self.namespace)
         logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
         self.task_id_to_job_name[task.make_unique_id()] = job_name
 
-    def _create_child_job_object(self, job_name: str, task_pkl_path: str) -> client.V1Job:
+    def _create_child_job_object(
+        self,
+        job_name: str,
+        task_pkl_path: str,
+        remote_config_paths: str,
+    ) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
         cmd = [
             "python",
             self.path_child_script,
             "--task-pkl-path",
             f"'{task_pkl_path}'",
+            "--remote-config-paths",
+            ",".join(remote_config_paths),
         ]
         job = deepcopy(self.template_job)
         # replace command
