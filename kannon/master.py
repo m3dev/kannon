@@ -60,6 +60,9 @@ class Kannon:
         remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
         remote_config_paths = [os.path.join(remote_config_dir, os.path.basename(config_path)) for config_path in config_paths]
         for remote_config_path in remote_config_paths:
+            if not config_path.endswith(".ini"):
+                logger.warning(f"Format {config_path} is not supported, so skipped")
+                continue
             with open(config_path, "r") as f:
                 make_target(remote_config_path).dump(f)
 
