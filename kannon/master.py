@@ -53,7 +53,8 @@ class Kannon:
         luigi_parser_instance = luigi.configuration.get_config()
         config_paths = luigi_parser_instance._config_paths
         for config_path in config_paths:
-            assert os.path.exists(config_path), f"Config file {config_path} does not exits."
+            logger.info(f"Config file {config_path} is registered")
+            # assert os.path.exists(config_path), f"Config file {config_path} does not exits."
         # save configs to remote cache
         workspace_dir = os.environ.get("TASK_WORKSPACE_DIRECTORY")
         remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")

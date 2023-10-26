@@ -456,12 +456,14 @@ woff = ["brotli (>=1.0.1)", "brotlicffi (>=0.8.0)", "zopfli (>=0.1.4)"]
 
 [[package]]
 name = "gokart"
-version = "0.0.0"
+version = "1.2.4"
 description = "Gokart solves reproducibility, task dependencies, constraints of good code, and ease of use for Machine Learning Pipeline. [Documentation](https://gokart.readthedocs.io/en/latest/)"
 optional = false
 python-versions = ">=3.8,<3.12"
-files = []
-develop = false
+files = [
+    {file = "gokart-1.2.4-py3-none-any.whl", hash = "sha256:620f8b56a31e8a4efd353950f049d7f9ed231620aed19273b8e11f9d9e5f2ddc"},
+    {file = "gokart-1.2.4.tar.gz", hash = "sha256:10adc110f2c0c697f716cf36769cd65ba4ade30e74124b0b9096ac9cc5c9d483"},
+]
 
 [package.dependencies]
 APScheduler = "*"
@@ -474,15 +476,9 @@ numpy = "*"
 pandas = "*"
 pyarrow = "*"
 redis = "*"
-slack-sdk = "^3"
+slack-sdk = ">=3,<4"
 tqdm = "*"
 uritemplate = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/maronuu/gokart.git"
-reference = "feature/make_target_ini"
-resolved_reference = "6dd28bf2bd2b8a5114e0b3294a281e9e361d8029"
 
 [[package]]
 name = "google-api-core"
@@ -1812,4 +1808,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8,<3.12"
-content-hash = "c65b59d89d5ff1dd4a605e529cebc1e1fe0b382ae63ce6b676113cef72ab3cc6"
+content-hash = "ee3cb44521f7be0f62baedf6aa4dbb7f9620f6b1d9f1c377cd0e35785be9fd28"
