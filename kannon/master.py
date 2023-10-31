@@ -65,6 +65,7 @@ class Kannon:
             remote_config_path = os.path.join(remote_config_dir, local_config_path)
             with open(local_config_path, "r") as f:
                 make_target(remote_config_path).dump(f)
+            logger.info(f"local config file {local_config_path} is saved at remote {remote_config_path}.")
             added_remote_config_paths.append(remote_config_path)
 
         # push tasks into queue
