@@ -62,9 +62,10 @@ class Kannon:
             if not local_config_path.endswith(".ini"):
                 logger.warning(f"Format {local_config_path} is not supported, so skipped")
                 continue
-            remote_config_path = os.path.join(remote_config_dir, local_config_path)
+            remote_config_path = os.path.join(remote_config_dir, os.path.basename(local_config_path))
             with open(local_config_path, "r") as f:
-                make_target(remote_config_path).dump(f)
+                content = "\n".join(f.readlines())
+                make_target(remote_config_path).dump(content)
             logger.info(f"local config file {local_config_path} is saved at remote {remote_config_path}.")
             added_remote_config_paths.append(remote_config_path)
 
