@@ -54,17 +54,18 @@ class Kannon:
         config_paths = luigi_parser_instance._config_paths
         for config_path in config_paths:
             logger.info(f"Config file {config_path} is registered")
-            # assert os.path.exists(config_path), f"Config file {config_path} does not exits."
         # save configs to remote cache
         workspace_dir = os.environ.get("TASK_WORKSPACE_DIRECTORY")
         remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
-        remote_config_paths = [os.path.join(remote_config_dir, os.path.basename(config_path)) for config_path in config_paths]
-        for remote_config_path in remote_config_paths:
-            if not remote_config_path.endswith(".ini"):
-                logger.warning(f"Format {config_path} is not supported, so skipped")
+        added_remote_config_paths: List[str] = []
+        for local_config_path in config_paths:
+            if not local_config_path.endswith(".ini"):
+                logger.warning(f"Format {local_config_path} is not supported, so skipped")
                 continue
-            with open(config_path, "r") as f:
+            remote_config_path = os.path.join(remote_config_dir, local_config_path)
+            with open(local_config_path, "r") as f:
                 make_target(remote_config_path).dump(f)
+            added_remote_config_paths.append(remote_config_path)
 
         # push tasks into queue
         logger.info("Creating task queue...")
@@ -101,7 +102,7 @@ class Kannon:
             # execute task
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
-                self._exec_bullet_task(task, remote_config_paths)
+                self._exec_bullet_task(task, added_remote_config_paths)
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
