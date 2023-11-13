@@ -30,6 +30,7 @@ class Kannon:
         env_to_inherit: Optional[List[str]] = None,
         master_pod_name: Optional[str] = None,
         master_pod_uid: Optional[str] = None,
+        dynamic_config_paths: Optional[List[str]] = None,
     ) -> None:
         # validation
         if not os.path.exists(path_child_script):
@@ -45,29 +46,33 @@ class Kannon:
         self.env_to_inherit = env_to_inherit
         self.master_pod_name = master_pod_name
         self.master_pod_uid = master_pod_uid
+        self.dynamic_config_paths = dynamic_config_paths
 
         self.task_id_to_job_name: Dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
         # check all config file paths exists
-        luigi_parser_instance = luigi.configuration.get_config()
-        config_paths = luigi_parser_instance._config_paths
-        for config_path in config_paths:
-            logger.info(f"Config file {config_path} is registered")
-        # save configs to remote cache
-        workspace_dir = os.environ.get("TASK_WORKSPACE_DIRECTORY")
-        remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
-        added_remote_config_paths: List[str] = []
-        for local_config_path in config_paths:
-            if not local_config_path.endswith(".ini"):
-                logger.warning(f"Format {local_config_path} is not supported, so skipped")
-                continue
-            remote_config_path = os.path.join(remote_config_dir, os.path.basename(local_config_path))
-            with open(local_config_path, "r") as f:
-                content = "\n".join(f.readlines())
-                make_target(remote_config_path).dump(content)
-            logger.info(f"local config file {local_config_path} is saved at remote {remote_config_path}.")
-            added_remote_config_paths.append(remote_config_path)
+        # luigi_parser_instance = luigi.configuration.get_config()
+        # config_paths = luigi_parser_instance._config_paths
+        if self.dynamic_config_paths:
+            logger.info("Handling dynamic config files...")
+            for config_path in self.dynamic_config_paths:
+                logger.info(f"Config file {config_path} is registered")
+            # save configs to remote cache
+            remote_config_dir = os.path.join(os.environ.get("TASK_WORKSPACE_DIRECTORY"), "kannon", "conf")
+            added_remote_config_paths: List[str] = []
+            for local_config_path in self.dynamic_config_paths:
+                if not local_config_path.endswith(".ini"):
+                    logger.warning(f"Format {local_config_path} is not supported, so skipped")
+                    continue
+                # load local config and save it to remote cache
+                local_conf_content = make_target(local_config_path).load()
+                remote_config_path = os.path.join(remote_config_dir, os.path.basename(local_config_path))
+                make_target(remote_config_path).dump(local_conf_content)
+                logger.info(f"local config file {local_config_path} is saved at remote {remote_config_path}.")
+                added_remote_config_paths.append(remote_config_path)
+        else:
+            logger.info("No dynamic config files are given.")
 
         # push tasks into queue
         logger.info("Creating task queue...")
