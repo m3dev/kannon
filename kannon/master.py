@@ -178,8 +178,8 @@ class Kannon:
             self.path_child_script,
             "--task-pkl-path",
             f"'{task_pkl_path}'",
-            "--remote-config-paths",
-            ",".join(remote_config_paths),
+            "--remote-config-path",
+            remote_config_paths[0], # TODO: support multiple paths
         ]
         job = deepcopy(self.template_job)
         # replace command
