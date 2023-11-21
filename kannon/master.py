@@ -6,7 +6,6 @@ from time import sleep
 from typing import Deque, Dict, List, Optional, Set
 
 import gokart
-import luigi
 from gokart.target import make_target
 from kubernetes import client
 from luigi.task import flatten
