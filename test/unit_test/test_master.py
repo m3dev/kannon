@@ -172,6 +172,58 @@ class TestCreateChildJobObject(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     master._create_child_job_object("test-job", path_to_pkl)
 
+    def test_owner_reference_set(self) -> None:
+
+        class Example(gokart.TaskOnKart):
+            pass
+
+        path_to_pkl = "path/to/obj"
+        template_job = self._get_template_job()
+        master_pod_name = "dummy-master-pod-name"
+        master_pod_uid = "dummy-master-pod-uid"
+        master = Kannon(
+            api_instance=None,
+            template_job=template_job,
+            job_prefix="",
+            path_child_script=__file__,  # just pass any existing file as dummy
+            env_to_inherit=["TASK_WORKSPACE_DIRECTORY"],
+            master_pod_name=master_pod_name,
+            master_pod_uid=master_pod_uid,
+        )
+        # set os env
+        os.environ.update({"TASK_WORKSPACE_DIRECTORY": "/cache"})
+        child_job_name = "test-job"
+        child_job = master._create_child_job_object(child_job_name, path_to_pkl)
+
+        owner_references = child_job.metadata.owner_references
+        self.assertEqual(len(owner_references), 1)
+        owner_reference = owner_references[0]
+        self.assertEqual(owner_reference.name, master_pod_name)
+        self.assertEqual(owner_reference.uid, master_pod_uid)
+
+    def test_owner_reference_not_set(self) -> None:
+
+        class Example(gokart.TaskOnKart):
+            pass
+
+        path_to_pkl = "path/to/obj"
+        template_job = self._get_template_job()
+        master = Kannon(
+            api_instance=None,
+            template_job=template_job,
+            job_prefix="",
+            path_child_script=__file__,  # just pass any existing file as dummy
+            env_to_inherit=["TASK_WORKSPACE_DIRECTORY"],
+        )
+        # set os env
+        os.environ.update({"TASK_WORKSPACE_DIRECTORY": "/cache"})
+        child_job_name = "test-job"
+        with self.assertLogs() as cm:
+            child_job = master._create_child_job_object(child_job_name, path_to_pkl)
+
+        self.assertEqual(cm.output, ['WARNING:kannon.master:Owner reference is not set because master pod info is not provided.'])
+        self.assertTrue(child_job.metadata.owner_references is None)
+
 
 if __name__ == '__main__':
     unittest.main()
