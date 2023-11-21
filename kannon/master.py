@@ -57,16 +57,9 @@ class Kannon:
                 continue
             if task.make_unique_id() in self.task_id_to_job_name:
                 # check if task is still running on child job
-                job_name = self.task_id_to_job_name[task.make_unique_id()]
-                job_status = get_job_status(
-                    self.api_instance,
-                    job_name,
-                    self.namespace,
-                )
-                if job_status == JobStatus.FAILED:
-                    raise RuntimeError(f"Task {self._gen_task_info(task)} on job {job_name} has failed.")
+                assert self._check_child_task_status(task), f"Child task {self._gen_task_info(task)} failed."
                 logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
-                task_queue.append(task) # re-enqueue task to check if it is done
+                task_queue.append(task)  # re-enqueue task to check if it is done
                 continue
 
             # TODO: enable user to specify duration to sleep for each task
@@ -168,6 +161,19 @@ class Kannon:
     @staticmethod
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
+
+    def _check_child_task_status(self, task: TaskOnBullet) -> bool:
+        if task.make_unique_id() not in self.task_id_to_job_name:
+            raise f"Task {self._gen_task_info(task)} is not found in `task_id_to_job_name`"
+        job_name = self.task_id_to_job_name[task.make_unique_id()]
+        job_status = get_job_status(
+            self.api_instance,
+            job_name,
+            self.namespace,
+        )
+        if job_status == JobStatus.FAILED:
+            raise RuntimeError(f"Task {self._gen_task_info(task)} on job {job_name} has failed.")
+        return True
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
