@@ -6,6 +6,7 @@ from time import sleep
 from typing import Deque, Dict, List, Optional, Set
 
 import gokart
+import luigi
 from gokart.target import make_target
 from kubernetes import client
 from luigi.task import flatten
@@ -29,6 +30,7 @@ class Kannon:
         env_to_inherit: Optional[List[str]] = None,
         master_pod_name: Optional[str] = None,
         master_pod_uid: Optional[str] = None,
+        dynamic_config_path: Optional[str] = None,
     ) -> None:
         # validation
         if not os.path.exists(path_child_script):
@@ -44,10 +46,29 @@ class Kannon:
         self.env_to_inherit = env_to_inherit
         self.master_pod_name = master_pod_name
         self.master_pod_uid = master_pod_uid
+        self.dynamic_config_path = dynamic_config_path
 
         self.task_id_to_job_name: Dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
+        # check all config file paths exists
+        remote_config_path = None
+        if self.dynamic_config_path:
+            logger.info("Handling dynamic config files...")
+            logger.info(f"Handling given config file {self.dynamic_config_path}")
+            # save configs to remote cache
+            remote_config_dir = os.path.join(os.environ.get("TASK_WORKSPACE_DIRECTORY"), "kannon", "conf")
+
+            if not self.dynamic_config_path.endswith(".ini"):
+                raise ValueError(f"Format {self.dynamic_config_path} is not supported.")
+            # load local config and save it to remote cache
+            local_conf_content = make_target(self.dynamic_config_path).load()
+            remote_config_path = os.path.join(remote_config_dir, os.path.basename(self.dynamic_config_path))
+            make_target(remote_config_path).dump(local_conf_content)
+            logger.info(f"local config file {self.dynamic_config_path} is saved at remote {remote_config_path}.")
+        else:
+            logger.info("No dynamic config files are given.")
+
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)
@@ -76,7 +97,7 @@ class Kannon:
             # execute task
             if isinstance(task, TaskOnBullet):
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
-                self._exec_bullet_task(task)
+                self._exec_bullet_task(task, remote_config_path)
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
@@ -117,7 +138,7 @@ class Kannon:
         except Exception:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
-    def _exec_bullet_task(self, task: TaskOnBullet) -> None:
+    def _exec_bullet_task(self, task: TaskOnBullet, remote_config_path: str) -> None:
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
         make_target(pkl_path).dump(task)
@@ -126,12 +147,18 @@ class Kannon:
         job = self._create_child_job_object(
             job_name=job_name,
             task_pkl_path=pkl_path,
+            remote_config_path=remote_config_path,
         )
         create_job(self.api_instance, job, self.namespace)
         logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
         self.task_id_to_job_name[task.make_unique_id()] = job_name
 
-    def _create_child_job_object(self, job_name: str, task_pkl_path: str) -> client.V1Job:
+    def _create_child_job_object(
+        self,
+        job_name: str,
+        task_pkl_path: str,
+        remote_config_path: Optional[str] = None,
+    ) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
         cmd = [
             "python",
@@ -139,6 +166,9 @@ class Kannon:
             "--task-pkl-path",
             f"'{task_pkl_path}'",
         ]
+        if remote_config_path:
+            cmd.append("--remote-config-path")
+            cmd.append(remote_config_path)
         job = deepcopy(self.template_job)
         # replace command
         assert job.spec.template.spec.containers[0].command is None, \
