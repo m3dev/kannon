@@ -58,7 +58,9 @@ class Kannon:
             logger.info("Handling dynamic config files...")
             logger.info(f"Handling given config file {self.dynamic_config_path}")
             # save configs to remote cache
-            remote_config_dir = os.path.join(os.environ.get("TASK_WORKSPACE_DIRECTORY"), "kannon", "conf")
+            if "TASK_WORKSPACE_DIRECTORY" not in os.environ:
+                raise ValueError("TASK_WORKSPACE_DIRECTORY is essential.")
+            remote_config_dir = os.path.join(os.environ["TASK_WORKSPACE_DIRECTORY"], "kannon", "conf")
 
             # TODO: support other format than .ini
             if not self.dynamic_config_path.endswith(".ini"):
@@ -140,7 +142,7 @@ class Kannon:
         except Exception:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
-    def _exec_bullet_task(self, task: TaskOnBullet, remote_config_path: str) -> None:
+    def _exec_bullet_task(self, task: TaskOnBullet, remote_config_path: Optional[str]) -> None:
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
         make_target(pkl_path).dump(task)
