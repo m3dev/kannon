@@ -164,7 +164,7 @@ class Kannon:
 
     def _check_child_task_status(self, task: TaskOnBullet) -> bool:
         if task.make_unique_id() not in self.task_id_to_job_name:
-            raise f"Task {self._gen_task_info(task)} is not found in `task_id_to_job_name`"
+            raise ValueError(f"Task {self._gen_task_info(task)} is not found in `task_id_to_job_name`")
         job_name = self.task_id_to_job_name[task.make_unique_id()]
         job_status = get_job_status(
             self.api_instance,
