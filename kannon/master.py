@@ -52,6 +52,7 @@ class Kannon:
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
         # check all config file paths exists
+        # TODO: support multiple dynamic config files
         remote_config_path = None
         if self.dynamic_config_path:
             logger.info("Handling dynamic config files...")
@@ -59,6 +60,7 @@ class Kannon:
             # save configs to remote cache
             remote_config_dir = os.path.join(os.environ.get("TASK_WORKSPACE_DIRECTORY"), "kannon", "conf")
 
+            # TODO: support other format than .ini
             if not self.dynamic_config_path.endswith(".ini"):
                 raise ValueError(f"Format {self.dynamic_config_path} is not supported.")
             # load local config and save it to remote cache
