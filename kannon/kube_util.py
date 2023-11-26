@@ -14,6 +14,11 @@ class JobStatus(enum.Enum):
     FAILED = 2
 
 
+# Max length of job name is 63.
+# https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+JOB_NAME_MAX_LENGTH = 63
+
+
 def create_job(api_instance: client.BatchV1Api, job: client.V1Job, namespace: str) -> None:
     api_response = api_instance.create_namespaced_job(
         body=job,
@@ -31,8 +36,9 @@ def get_job_status(api_instance: client.BatchV1Api, job_name: str, namespace: st
 
 
 def gen_job_name(job_prefix: str) -> str:
-    job_name = f"{job_prefix}-{str(random.randint(0, 255)).zfill(3)}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    # TODO: validate job_name more precisely
-    job_name = job_name[:50]
+    job_suffix = f"{datetime.now().strftime('%Y%m%d%H%M%S')}-{str(random.randint(0, 255)).zfill(3)}"
+    job_prefix = job_prefix[:JOB_NAME_MAX_LENGTH - 1 - len(job_suffix)]
+    job_name = f"{job_prefix}-{job_suffix}"
     job_name = job_name.replace("_", "-").lower()
+    job_name = job_name[:JOB_NAME_MAX_LENGTH]
     return job_name

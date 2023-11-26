@@ -76,6 +76,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
         self.assertEqual(cm.output, [
             'INFO:kannon.master:Creating task queue...',
             f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
+            'INFO:kannon.master:Total tasks in task queue: 1',
             'INFO:kannon.master:Consuming task queue...',
             f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
             f'INFO:kannon.master:Executing task {root_task_info} on master job...',
@@ -101,6 +102,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
         self.assertEqual(cm.output, [
             'INFO:kannon.master:Creating task queue...',
             f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
+            'INFO:kannon.master:Total tasks in task queue: 1',
             'INFO:kannon.master:Consuming task queue...',
             f'INFO:kannon.master:Checking if task {root_task_info} is executable...',
             f'INFO:kannon.master:Trying to run task {root_task_info} on child job...',
@@ -143,6 +145,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
             f'INFO:kannon.master:Task {c2_task_info} is pushed to task queue',
             f'INFO:kannon.master:Task {c3_task_info} is pushed to task queue',
             f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
+            'INFO:kannon.master:Total tasks in task queue: 4',
             'INFO:kannon.master:Consuming task queue...',
             f'INFO:kannon.master:Checking if task {c1_task_info} is executable...',
             f'INFO:kannon.master:Trying to run task {c1_task_info} on child job...',
@@ -199,6 +202,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
                 f'INFO:kannon.master:Task {c2_task_info} is pushed to task queue',
                 f'INFO:kannon.master:Task {c3_task_info} is pushed to task queue',
                 f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
+                'INFO:kannon.master:Total tasks in task queue: 4',
                 'INFO:kannon.master:Consuming task queue...',
                 f'INFO:kannon.master:Checking if task {c1_task_info} is executable...',
                 f'INFO:kannon.master:Trying to run task {c1_task_info} on child job...',
