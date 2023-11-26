@@ -42,6 +42,8 @@ class Kannon:
         if env_to_inherit is None:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
+        if max_child_jobs is not None and max_child_jobs <= 0:
+            raise ValueError(f"max_child_jobs must be positive integer, but got {max_child_jobs}")
         self.max_child_jobs = max_child_jobs
 
         self.task_id_to_job_name: dict[str, str] = dict()
