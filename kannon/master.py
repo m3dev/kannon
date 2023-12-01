@@ -65,7 +65,7 @@ class Kannon:
                 continue
             if task.make_unique_id() in running_task_ids:
                 # check if task is still running on child job
-                assert self._check_child_task_status(task), f"Child task {self._gen_task_info(task)} failed."
+                self._check_child_task_status(task), f"Child task {self._gen_task_info(task)} failed."
                 logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
                 task_queue.append(task)  # re-enqueue task to check if it is done
                 continue
@@ -175,7 +175,7 @@ class Kannon:
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
 
-    def _check_child_task_status(self, task: TaskOnBullet) -> bool:
+    def _check_child_task_status(self, task: TaskOnBullet):
         if task.make_unique_id() not in self.task_id_to_job_name:
             raise ValueError(f"Task {self._gen_task_info(task)} is not found in `task_id_to_job_name`")
         job_name = self.task_id_to_job_name[task.make_unique_id()]
@@ -186,7 +186,6 @@ class Kannon:
         )
         if job_status == JobStatus.FAILED:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job {job_name} has failed.")
-        return True
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
