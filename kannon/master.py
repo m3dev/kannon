@@ -175,7 +175,7 @@ class Kannon:
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
 
-    def _check_child_task_status(self, task: TaskOnBullet):
+    def _check_child_task_status(self, task: TaskOnBullet) -> None:
         if task.make_unique_id() not in self.task_id_to_job_name:
             raise ValueError(f"Task {self._gen_task_info(task)} is not found in `task_id_to_job_name`")
         job_name = self.task_id_to_job_name[task.make_unique_id()]
