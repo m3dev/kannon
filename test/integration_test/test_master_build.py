@@ -59,8 +59,8 @@ class MockKannon(Kannon):
         self.task_id_to_job_name[task.make_unique_id()] = "dummy_job_name"
         task.run()
 
-    def _check_child_task_status(self, task: MockTaskOnBullet) -> bool:
-        return True
+    def _check_child_task_status(self, task: MockTaskOnBullet) -> None:
+        return None
 
     def _is_executable(self, task: MockTaskOnKart) -> bool:
         children = flatten(task.requires())

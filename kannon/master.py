@@ -65,7 +65,7 @@ class Kannon:
                 continue
             if task.make_unique_id() in running_task_ids:
                 # check if task is still running on child job
-                self._check_child_task_status(task), f"Child task {self._gen_task_info(task)} failed."
+                self._check_child_task_status(task)
                 logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
                 task_queue.append(task)  # re-enqueue task to check if it is done
                 continue
