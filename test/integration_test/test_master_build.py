@@ -56,7 +56,7 @@ class MockKannon(Kannon):
     def _exec_gokart_task(self, task: MockTaskOnKart) -> None:
         task.run()
 
-    def _exec_bullet_task(self, task: MockTaskOnBullet) -> None:
+    def _exec_bullet_task(self, task: MockTaskOnBullet, remote_config_path: str | None) -> None:
         self.task_id_to_job_name[task.make_unique_id()] = "dummy_job_name"
         task.run()
 
