@@ -5,7 +5,6 @@ import os
 from collections import deque
 from copy import deepcopy
 from time import sleep
-from typing import List, Optional
 
 import gokart
 from gokart.target import make_target

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import time
 import unittest
-from typing import Optional
 from unittest.mock import MagicMock
 
 import gokart
