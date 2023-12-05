@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import logging
 import os
 from collections import deque
 from copy import deepcopy
 from time import sleep
-from typing import Deque, Dict, List, Optional, Set
+from typing import Optional, List
 
 import gokart
 from gokart.target import make_target
@@ -29,6 +31,7 @@ class Kannon:
         env_to_inherit: Optional[List[str]] = None,
         master_pod_name: Optional[str] = None,
         master_pod_uid: Optional[str] = None,
+        max_child_jobs: int | None = None,
     ) -> None:
         # validation
         if not os.path.exists(path_child_script):
@@ -42,10 +45,15 @@ class Kannon:
         if env_to_inherit is None:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
+
         self.master_pod_name = master_pod_name
         self.master_pod_uid = master_pod_uid
 
-        self.task_id_to_job_name: Dict[str, str] = dict()
+        if max_child_jobs is not None and max_child_jobs <= 0:
+            raise ValueError(f"max_child_jobs must be positive integer, but got {max_child_jobs}")
+        self.max_child_jobs = max_child_jobs
+
+        self.task_id_to_job_name: dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
         # push tasks into queue
@@ -53,15 +61,18 @@ class Kannon:
         task_queue = self._create_task_queue(root_task)
 
         # consume task queue
+        running_task_ids: set[str] = set()
         logger.info("Consuming task queue...")
         while task_queue:
             task = task_queue.popleft()
             if task.complete():
                 logger.info(f"Task {self._gen_task_info(task)} is already completed.")
+                if task.make_unique_id() in running_task_ids:
+                    running_task_ids.remove(task.make_unique_id())
                 continue
-            if task.make_unique_id() in self.task_id_to_job_name:
+            if task.make_unique_id() in running_task_ids:
                 # check if task is still running on child job
-                assert self._check_child_task_status(task), f"Child task {self._gen_task_info(task)} failed."
+                self._check_child_task_status(task)
                 logger.info(f"Task {self._gen_task_info(task)} is still running on child job.")
                 task_queue.append(task)  # re-enqueue task to check if it is done
                 continue
@@ -75,8 +86,13 @@ class Kannon:
                 continue
             # execute task
             if isinstance(task, TaskOnBullet):
+                if self.max_child_jobs is not None and len(running_task_ids) >= self.max_child_jobs:
+                    task_queue.append(task)  # re-enqueue task to check later
+                    logger.info(f"Reach max_child_jobs, waiting to run task {self._gen_task_info(task)} on child job...")
+                    continue
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
                 self._exec_bullet_task(task)
+                running_task_ids.add(task.make_unique_id())  # mark as already launched task
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
                 logger.info(f"Executing task {self._gen_task_info(task)} on master job...")
@@ -87,9 +103,9 @@ class Kannon:
 
         logger.info("All tasks completed!")
 
-    def _create_task_queue(self, root_task: gokart.TaskOnKart) -> Deque[gokart.TaskOnKart]:
-        task_queue: Deque[gokart.TaskOnKart] = deque()
-        visited_task_ids: Set[str] = set()
+    def _create_task_queue(self, root_task: gokart.TaskOnKart) -> deque[gokart.TaskOnKart]:
+        task_queue: deque[gokart.TaskOnKart] = deque()
+        visited_task_ids: set[str] = set()
 
         def _rec_enqueue_task(task: gokart.TaskOnKart) -> None:
             """Traversal task tree in post-order to push tasks into task queue."""
@@ -180,7 +196,7 @@ class Kannon:
     def _gen_pkl_path(task: gokart.TaskOnKart) -> str:
         return os.path.join(task.workspace_directory, 'kannon', f'task_obj_{task.make_unique_id()}.pkl')
 
-    def _check_child_task_status(self, task: TaskOnBullet) -> bool:
+    def _check_child_task_status(self, task: TaskOnBullet) -> None:
         if task.make_unique_id() not in self.task_id_to_job_name:
             raise ValueError(f"Task {self._gen_task_info(task)} is not found in `task_id_to_job_name`")
         job_name = self.task_id_to_job_name[task.make_unique_id()]
@@ -191,7 +207,6 @@ class Kannon:
         )
         if job_status == JobStatus.FAILED:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job {job_name} has failed.")
-        return True
 
     def _is_executable(self, task: gokart.TaskOnKart) -> bool:
         children = flatten(task.requires())
