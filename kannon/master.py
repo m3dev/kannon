@@ -5,6 +5,7 @@ import os
 from collections import deque
 from copy import deepcopy
 from time import sleep
+from typing import List, Optional
 
 import gokart
 from gokart.target import make_target
@@ -45,9 +46,11 @@ class Kannon:
         if env_to_inherit is None:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
+
         self.master_pod_name = master_pod_name
         self.master_pod_uid = master_pod_uid
         self.dynamic_config_path = dynamic_config_path
+
         if max_child_jobs is not None and max_child_jobs <= 0:
             raise ValueError(f"max_child_jobs must be positive integer, but got {max_child_jobs}")
         self.max_child_jobs = max_child_jobs
