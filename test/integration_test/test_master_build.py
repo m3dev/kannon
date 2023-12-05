@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import gokart
 import luigi
 from kubernetes import client
+from luigi.task import flatten
 
 from kannon import Kannon, TaskOnBullet
 
@@ -55,7 +56,18 @@ class MockKannon(Kannon):
         task.run()
 
     def _exec_bullet_task(self, task: MockTaskOnBullet) -> None:
+        self.task_id_to_job_name[task.make_unique_id()] = "dummy_job_name"
         task.run()
+
+    def _check_child_task_status(self, task: MockTaskOnBullet) -> None:
+        return None
+
+    def _is_executable(self, task: MockTaskOnKart) -> bool:
+        children = flatten(task.requires())
+        for child in children:
+            if not child.complete():
+                return False
+        return True
 
 
 class TestConsumeTaskQueue(unittest.TestCase):
