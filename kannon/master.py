@@ -5,6 +5,7 @@ import os
 from collections import deque
 from copy import deepcopy
 from time import sleep
+from typing import List, Optional
 
 import gokart
 from gokart.target import make_target
@@ -27,7 +28,9 @@ class Kannon:
         # kannon resources
         job_prefix: str,
         path_child_script: str = "./run_child.py",
-        env_to_inherit: list[str] | None = None,
+        env_to_inherit: Optional[List[str]] = None,
+        master_pod_name: Optional[str] = None,
+        master_pod_uid: Optional[str] = None,
         max_child_jobs: int | None = None,
     ) -> None:
         # validation
@@ -42,6 +45,10 @@ class Kannon:
         if env_to_inherit is None:
             env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
+
+        self.master_pod_name = master_pod_name
+        self.master_pod_uid = master_pod_uid
+
         if max_child_jobs is not None and max_child_jobs <= 0:
             raise ValueError(f"max_child_jobs must be positive integer, but got {max_child_jobs}")
         self.max_child_jobs = max_child_jobs
@@ -164,6 +171,20 @@ class Kannon:
         job.spec.template.spec.containers[0].env = child_envs
         # replace job name
         job.metadata.name = job_name
+        # add owner reference from child to parent if master pod info is available
+        if self.master_pod_name and self.master_pod_uid:
+            owner_reference = client.V1OwnerReference(
+                api_version="batch/v1",
+                kind="Pod",
+                name=self.master_pod_name,  # owner pod name
+                uid=self.master_pod_uid,  # owner pod uid
+            )
+            if job.metadata.owner_references:
+                job.metadata.owner_references.append(owner_reference)
+            else:
+                job.metadata.owner_references = [owner_reference]
+        else:
+            logger.warning("Owner reference is not set because master pod info is not provided.")
 
         return job
 
