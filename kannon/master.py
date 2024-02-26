@@ -42,8 +42,6 @@ class Kannon:
         self.namespace = template_job.metadata.namespace
         self.job_prefix = job_prefix
         self.path_child_script = path_child_script
-        # if env_to_inherit is None:
-        # env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
 
         self.master_pod_name = master_pod_name
@@ -194,10 +192,11 @@ class Kannon:
         child_envs = job.spec.template.spec.containers[0].env
         if not child_envs:
             child_envs = []
-        for env_name in self.env_to_inherit:
-            if env_name not in os.environ:
-                raise ValueError(f"Envvar {env_name} does not exist.")
-            child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
+        if self.env_to_inherit:
+            for env_name in self.env_to_inherit:
+                if env_name not in os.environ:
+                    raise ValueError(f"Envvar {env_name} does not exist.")
+                child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
         job.spec.template.spec.containers[0].env = child_envs
         # replace job name
         job.metadata.name = job_name
