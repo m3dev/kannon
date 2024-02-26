@@ -42,8 +42,8 @@ class Kannon:
         self.namespace = template_job.metadata.namespace
         self.job_prefix = job_prefix
         self.path_child_script = path_child_script
-        if env_to_inherit is None:
-            env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
+        # if env_to_inherit is None:
+        # env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
 
         self.master_pod_name = master_pod_name
@@ -57,17 +57,15 @@ class Kannon:
         self.task_id_to_job_name: dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
-        # check all config file paths exists
         # TODO: support multiple dynamic config files
+        # use workspace directory of root task as the root directory for remote cache
+        workspace_dir = root_task.workspace_directory
         remote_config_path = None
         if self.dynamic_config_path:
             logger.info("Handling dynamic config files...")
             logger.info(f"Handling given config file {self.dynamic_config_path}")
             # save configs to remote cache
-            if "TASK_WORKSPACE_DIRECTORY" not in os.environ:
-                raise ValueError("TASK_WORKSPACE_DIRECTORY is essential.")
-            remote_config_dir = os.path.join(os.environ["TASK_WORKSPACE_DIRECTORY"], "kannon", "conf")
-
+            remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
             # TODO: support other format than .ini
             if not self.dynamic_config_path.endswith(".ini"):
                 raise ValueError(f"Format {self.dynamic_config_path} is not supported.")
