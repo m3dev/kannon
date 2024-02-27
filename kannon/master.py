@@ -59,7 +59,6 @@ class Kannon:
         # use workspace directory of root task as the root directory for remote cache
         workspace_dir = root_task.workspace_directory
         remote_config_path = None
-        dynamic_config_path = self.dynamic_config_paths[0]
         if self.dynamic_config_paths:
             assert len(self.dynamic_config_paths) == 1, "Currently kannon doesn't support multiple dynamic config files."
             dynamic_config_path = self.dynamic_config_paths[0]
