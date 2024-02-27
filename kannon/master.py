@@ -30,7 +30,7 @@ class Kannon:
         env_to_inherit: list[str] | None = None,
         master_pod_name: str | None = None,
         master_pod_uid: str | None = None,
-        dynamic_config_path: str | None = None,
+        dynamic_config_paths: list[str] | None = None,
         max_child_jobs: int | None = None,
     ) -> None:
         # validation
@@ -46,7 +46,7 @@ class Kannon:
 
         self.master_pod_name = master_pod_name
         self.master_pod_uid = master_pod_uid
-        self.dynamic_config_path = dynamic_config_path
+        self.dynamic_config_paths = dynamic_config_paths
 
         if max_child_jobs is not None and max_child_jobs <= 0:
             raise ValueError(f"max_child_jobs must be positive integer, but got {max_child_jobs}")
@@ -59,19 +59,22 @@ class Kannon:
         # use workspace directory of root task as the root directory for remote cache
         workspace_dir = root_task.workspace_directory
         remote_config_path = None
-        if self.dynamic_config_path:
+        dynamic_config_path = self.dynamic_config_paths[0]
+        if self.dynamic_config_paths:
+            assert len(self.dynamic_config_paths) == 1, "Currently kannon doesn't support multiple dynamic config files."
+            dynamic_config_path = self.dynamic_config_paths[0]
             logger.info("Handling dynamic config files...")
-            logger.info(f"Handling given config file {self.dynamic_config_path}")
+            logger.info(f"Handling given config file {dynamic_config_path}")
             # save configs to remote cache
             remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
             # TODO: support other format than .ini
-            if not self.dynamic_config_path.endswith(".ini"):
-                raise ValueError(f"Format {self.dynamic_config_path} is not supported.")
+            if not dynamic_config_path.endswith(".ini"):
+                raise ValueError(f"Format {dynamic_config_path} is not supported.")
             # load local config and save it to remote cache
-            local_conf_content = make_target(self.dynamic_config_path).load()
-            remote_config_path = os.path.join(remote_config_dir, os.path.basename(self.dynamic_config_path))
+            local_conf_content = make_target(dynamic_config_path).load()
+            remote_config_path = os.path.join(remote_config_dir, os.path.basename(dynamic_config_path))
             make_target(remote_config_path).dump(local_conf_content)
-            logger.info(f"local config file {self.dynamic_config_path} is saved at remote {remote_config_path}.")
+            logger.info(f"local config file {dynamic_config_path} is saved at remote {remote_config_path}.")
         else:
             logger.info("No dynamic config files are given.")
 
