@@ -55,7 +55,7 @@ class MockKannon(Kannon):
     def _exec_gokart_task(self, task: MockTaskOnKart) -> None:
         task.run()
 
-    def _exec_bullet_task(self, task: MockTaskOnBullet) -> None:
+    def _exec_bullet_task(self, task: MockTaskOnBullet, remote_config_path: str | None) -> None:
         self.task_id_to_job_name[task.make_unique_id()] = "dummy_job_name"
         task.run()
 
@@ -86,6 +86,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
 
         root_task_info = master._gen_task_info(root_task)
         self.assertEqual(cm.output, [
+            'INFO:kannon.master:No dynamic config files are given.',
             'INFO:kannon.master:Creating task queue...',
             f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
             'INFO:kannon.master:Total tasks in task queue: 1',
@@ -112,6 +113,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
 
         root_task_info = master._gen_task_info(root_task)
         self.assertEqual(cm.output, [
+            'INFO:kannon.master:No dynamic config files are given.',
             'INFO:kannon.master:Creating task queue...',
             f'INFO:kannon.master:Task {root_task_info} is pushed to task queue',
             'INFO:kannon.master:Total tasks in task queue: 1',
@@ -152,6 +154,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
         c3_task_info = master._gen_task_info(c3)
         root_task_info = master._gen_task_info(root_task)
         self.assertEqual(cm.output, [
+            'INFO:kannon.master:No dynamic config files are given.',
             'INFO:kannon.master:Creating task queue...',
             f'INFO:kannon.master:Task {c1_task_info} is pushed to task queue',
             f'INFO:kannon.master:Task {c2_task_info} is pushed to task queue',

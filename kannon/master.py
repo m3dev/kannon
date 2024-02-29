@@ -5,7 +5,6 @@ import os
 from collections import deque
 from copy import deepcopy
 from time import sleep
-from typing import List, Optional
 
 import gokart
 from gokart.target import make_target
@@ -28,9 +27,10 @@ class Kannon:
         # kannon resources
         job_prefix: str,
         path_child_script: str = "./run_child.py",
-        env_to_inherit: Optional[List[str]] = None,
-        master_pod_name: Optional[str] = None,
-        master_pod_uid: Optional[str] = None,
+        env_to_inherit: list[str] | None = None,
+        master_pod_name: str | None = None,
+        master_pod_uid: str | None = None,
+        dynamic_config_paths: list[str] | None = None,
         max_child_jobs: int | None = None,
     ) -> None:
         # validation
@@ -42,12 +42,11 @@ class Kannon:
         self.namespace = template_job.metadata.namespace
         self.job_prefix = job_prefix
         self.path_child_script = path_child_script
-        if env_to_inherit is None:
-            env_to_inherit = ["TASK_WORKSPACE_DIRECTORY"]
         self.env_to_inherit = env_to_inherit
 
         self.master_pod_name = master_pod_name
         self.master_pod_uid = master_pod_uid
+        self.dynamic_config_paths = dynamic_config_paths
 
         if max_child_jobs is not None and max_child_jobs <= 0:
             raise ValueError(f"max_child_jobs must be positive integer, but got {max_child_jobs}")
@@ -56,6 +55,28 @@ class Kannon:
         self.task_id_to_job_name: dict[str, str] = dict()
 
     def build(self, root_task: gokart.TaskOnKart) -> None:
+        # TODO: support multiple dynamic config files
+        # use workspace directory of root task as the root directory for remote cache
+        workspace_dir = root_task.workspace_directory
+        remote_config_path = None
+        if self.dynamic_config_paths:
+            assert len(self.dynamic_config_paths) == 1, "Currently kannon doesn't support multiple dynamic config files."
+            dynamic_config_path = self.dynamic_config_paths[0]
+            logger.info("Handling dynamic config files...")
+            logger.info(f"Handling given config file {dynamic_config_path}")
+            # save configs to remote cache
+            remote_config_dir = os.path.join(workspace_dir, "kannon", "conf")
+            # TODO: support other format than .ini
+            if not dynamic_config_path.endswith(".ini"):
+                raise ValueError(f"Format {dynamic_config_path} is not supported.")
+            # load local config and save it to remote cache
+            local_conf_content = make_target(dynamic_config_path).load()
+            remote_config_path = os.path.join(remote_config_dir, os.path.basename(dynamic_config_path))
+            make_target(remote_config_path).dump(local_conf_content)
+            logger.info(f"local config file {dynamic_config_path} is saved at remote {remote_config_path}.")
+        else:
+            logger.info("No dynamic config files are given.")
+
         # push tasks into queue
         logger.info("Creating task queue...")
         task_queue = self._create_task_queue(root_task)
@@ -91,7 +112,7 @@ class Kannon:
                     logger.info(f"Reach max_child_jobs, waiting to run task {self._gen_task_info(task)} on child job...")
                     continue
                 logger.info(f"Trying to run task {self._gen_task_info(task)} on child job...")
-                self._exec_bullet_task(task)
+                self._exec_bullet_task(task, remote_config_path)
                 running_task_ids.add(task.make_unique_id())  # mark as already launched task
                 task_queue.append(task)  # re-enqueue task to check if it is done
             elif isinstance(task, gokart.TaskOnKart):
@@ -133,7 +154,7 @@ class Kannon:
         except Exception:
             raise RuntimeError(f"Task {self._gen_task_info(task)} on job master has failed.")
 
-    def _exec_bullet_task(self, task: TaskOnBullet) -> None:
+    def _exec_bullet_task(self, task: TaskOnBullet, remote_config_path: str | None) -> None:
         # Save task instance as pickle object
         pkl_path = self._gen_pkl_path(task)
         make_target(pkl_path).dump(task)
@@ -142,12 +163,18 @@ class Kannon:
         job = self._create_child_job_object(
             job_name=job_name,
             task_pkl_path=pkl_path,
+            remote_config_path=remote_config_path,
         )
         create_job(self.api_instance, job, self.namespace)
         logger.info(f"Created child job {job_name} with task {self._gen_task_info(task)}")
         self.task_id_to_job_name[task.make_unique_id()] = job_name
 
-    def _create_child_job_object(self, job_name: str, task_pkl_path: str) -> client.V1Job:
+    def _create_child_job_object(
+        self,
+        job_name: str,
+        task_pkl_path: str,
+        remote_config_path: str | None = None,
+    ) -> client.V1Job:
         # TODO: use python -c to avoid dependency to execute_task.py
         cmd = [
             "python",
@@ -155,6 +182,9 @@ class Kannon:
             "--task-pkl-path",
             f"'{task_pkl_path}'",
         ]
+        if remote_config_path:
+            cmd.append("--remote-config-path")
+            cmd.append(remote_config_path)
         job = deepcopy(self.template_job)
         # replace command
         assert job.spec.template.spec.containers[0].command is None, \
@@ -164,10 +194,11 @@ class Kannon:
         child_envs = job.spec.template.spec.containers[0].env
         if not child_envs:
             child_envs = []
-        for env_name in self.env_to_inherit:
-            if env_name not in os.environ:
-                raise ValueError(f"Envvar {env_name} does not exist.")
-            child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
+        if self.env_to_inherit:
+            for env_name in self.env_to_inherit:
+                if env_name not in os.environ:
+                    raise ValueError(f"Envvar {env_name} does not exist.")
+                child_envs.append({"name": env_name, "value": os.environ.get(env_name)})
         job.spec.template.spec.containers[0].env = child_envs
         # replace job name
         job.metadata.name = job_name
