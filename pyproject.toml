@@ -28,6 +28,8 @@ yapf = ">=0.32"
 toml = "*"
 mypy = "^1.2.0"
 pandas-stubs = "*"
+pyyaml = "6.0.1"
+
 
 [tool.flake8]
 per-file-ignores = """
