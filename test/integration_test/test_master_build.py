@@ -212,6 +212,7 @@ class TestConsumeTaskQueue(unittest.TestCase):
         self.assertEqual(
             cm.output,
             [
+                'INFO:kannon.master:No dynamic config files are given.',
                 'INFO:kannon.master:Creating task queue...',
                 f'INFO:kannon.master:Task {c1_task_info} is pushed to task queue',
                 f'INFO:kannon.master:Task {c2_task_info} is pushed to task queue',

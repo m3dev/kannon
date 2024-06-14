@@ -101,10 +101,6 @@ class TestCreateChildJobObject(unittest.TestCase):
         # following should be overwritten
         self.assertEqual(child_job.spec.template.spec.containers[0].command, ["python", __file__, "--task-pkl-path", f"'{path_to_pkl}'"])
         self.assertEqual(child_job.metadata.name, child_job_name)
-        # envvar TASK_WORKSPACE_DIRECTORY should be inherited
-        child_env = child_job.spec.template.spec.containers[0].env
-        self.assertEqual(len(child_env), 1)
-        self.assertEqual(child_env[0], {"name": "TASK_WORKSPACE_DIRECTORY", "value": "/cache"})
 
     def test_success_custom_env(self) -> None:
 
@@ -150,27 +146,6 @@ class TestCreateChildJobObject(unittest.TestCase):
         os.environ.update({"TASK_WORKSPACE_DIRECTORY": "/cache"})
         with self.assertRaises(AssertionError):
             master._create_child_job_object("test-job", path_to_pkl)
-
-    def test_fail_default_env_not_exist(self) -> None:
-
-        class Example(gokart.TaskOnKart):
-            pass
-
-        path_to_pkl = "path/to/obj"
-        template_job = self._get_template_job()
-
-        cases = [None, ["TASK_WORKSPACE_DIRECTORY", "MY_ENV0", "MY_ENV1"]]
-        for case in cases:
-            with self.subTest(case=case):
-                master = Kannon(
-                    api_instance=None,
-                    template_job=template_job,
-                    job_prefix="",
-                    path_child_script=__file__,  # just pass any existing file as dummy
-                    env_to_inherit=case,
-                )
-                with self.assertRaises(ValueError):
-                    master._create_child_job_object("test-job", path_to_pkl)
 
     def test_owner_reference_set(self) -> None:
 
