@@ -29,6 +29,7 @@ toml = "*"
 mypy = "^1.2.0"
 pandas-stubs = "*"
 numpy = "1.26.4"
+pyarrow = "16.0.0"
 
 [tool.flake8]
 per-file-ignores = """
