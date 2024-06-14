@@ -15,8 +15,8 @@ style = "pep440"
 pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)"
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.12"
-gokart = "^1.2.2"
+python = "<4,>=3.9"
+gokart = ">=1.4.0"
 kubernetes = "^26.1.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -27,7 +27,7 @@ isort = "^5.7"
 yapf = ">=0.32"
 toml = "*"
 mypy = "^1.2.0"
-pandas-stubs = "^1.5.3.230321"
+pandas-stubs = "*"
 
 [tool.flake8]
 per-file-ignores = """
